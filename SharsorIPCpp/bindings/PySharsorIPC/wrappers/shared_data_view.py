@@ -117,7 +117,7 @@ class SharedTWrapper:
             if torch.cuda.is_available():
                 # we copy torch view init. and dtype
                 # (of course the mirror has to be updated manually)
-                self._gpu_mirror = self._torch_view.to('cuda')
+                self._gpu_mirror = self._torch_view.to('cuda').requires_grad_(False)
             else:
                 exception = f"GPU mirror cannot be initialized! No cuda device detected"
                 Logger.log(self.__class__.__name__,
@@ -174,7 +174,7 @@ class SharedTWrapper:
         
         if self._with_torch_view:
             import torch
-            self._torch_view = torch.from_numpy(self._numpy_view) # changes in either the 
+            self._torch_view = torch.from_numpy(self._numpy_view).requires_grad_(False) # changes in either the 
         # numpy or torch view will be reflected into the other one
 
         # also write fill value to shared memory
