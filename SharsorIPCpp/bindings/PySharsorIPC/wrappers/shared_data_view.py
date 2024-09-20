@@ -388,8 +388,10 @@ class SharedTWrapper:
                         read=read)
 
     def gpu_mirror_exists(self):
-
         return self._gpu_mirror is not None
+    
+    def torch_view_exists(self):
+        return self._with_torch_view
     
     def get_torch_mirror(self, 
                 gpu: bool = False):
