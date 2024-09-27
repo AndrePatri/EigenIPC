@@ -418,7 +418,8 @@ class SharedTWrapper:
         return self._numpy_view
     
     def synch_mirror(self,
-                from_gpu: bool):
+        from_gpu: bool,
+        non_blocking: bool = False):
         
         if self._gpu_mirror is None:
             exception = f"Cannot be called since no GPU mirror is available! " + \
@@ -429,12 +430,18 @@ class SharedTWrapper:
                 LogType.EXCEP,
                 throw_when_excep = True)
 
+        # from torch docs
+        # While cpu_tensor.to("cuda", non_blocking=True).mean() executes correctly, 
+        # attempting cuda_tensor.to("cpu", non_blocking=True).mean() will result in erroneous outputs.
+        # when copying from GPU to CPU non_blocking is therefore overridden to be always False
         if from_gpu:
             # synch cpu torch view from latest gpu mirror data (GPU -> CPU)
             self._torch_view[:, :] = self._gpu_mirror.cpu()
+            self._torch_view[:, :] = self._gpu_mirror.to("cpu",non_blocking=False)
+
         else:
             # synch gpu torch data from torch view on cpu (CPU -> GPU)
-            self._gpu_mirror[:, :] = self._torch_view.to('cuda')
+            self._gpu_mirror[:, :] = self._torch_view.to('cuda',non_blocking=non_blocking)
 
         # torch.cuda.synchronize() # ensuring that all the streams on the GPU are completed \
         # before the CPU continues execution
