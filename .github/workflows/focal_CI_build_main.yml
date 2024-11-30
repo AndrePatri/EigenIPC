@@ -43,7 +43,7 @@ jobs:
 
         mkdir build
         cd build
-        cmake ../SharsorIPCpp/ -DWITH_TESTS=ON -DWITH_PYTHON=OFF ..
+        cmake ../EigenIPC/ -DWITH_TESTS=ON -DWITH_PYTHON=OFF ..
         sudo make -j4 install
         ctest --output-on-failure --verbose 
 
@@ -80,7 +80,7 @@ jobs:
 
         mkdir build
         cd build
-        cmake ../SharsorIPCpp/ -DWITH_TESTS=ON -DWITH_PYTHON=OFF ..
+        cmake ../EigenIPC/ -DWITH_TESTS=ON -DWITH_PYTHON=OFF ..
         sudo make -j4 install
         cd tests
         ./run_consistency_check.sh
@@ -125,12 +125,12 @@ jobs:
         cd build
         WITH_TESTS=ON
         WITH_PYTHON=ON
-        cmake ../SharsorIPCpp/ -DWITH_TESTS=ON -DWITH_PYTHON=ON ..
+        cmake ../EigenIPC/ -DWITH_TESTS=ON -DWITH_PYTHON=ON ..
         sudo make -j4 install
         export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3/dist-packages/
         echo "Current PYTHONPATH: "
         echo $PYTHONPATH
-        python3 tests/PySharsorIPC/perf_and_consistency_test.py
+        python3 tests/PyEigenIPC/perf_and_consistency_test.py
         sudo rm -r * 
         
     - name: Convert Python version

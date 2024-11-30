@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'SharsorIPCpp'
+project = 'EigenIPC'
 copyright = '2023, Andrea Patrizi (AndrePatri)'
 author = 'Andrea Patrizi'
 
