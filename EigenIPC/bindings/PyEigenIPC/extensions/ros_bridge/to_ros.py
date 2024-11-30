@@ -1,5 +1,5 @@
 from EigenIPC.PyEigenIPC import Client
-from EigenIPC.PyBindEigenIPC import StringTensorClient
+from EigenIPC.PyEigenIPC import StringTensorClient
 
 from typing import Union
 

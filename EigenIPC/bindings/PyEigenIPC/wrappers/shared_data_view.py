@@ -1,10 +1,10 @@
 import numpy as np
 
 from EigenIPC.PyEigenIPC import ServerFactory, ClientFactory
-from EigenIPC.PyBindEigenIPC import VLevel
+from EigenIPC.PyEigenIPC import VLevel
 from EigenIPC.PyEigenIPC import RowMajor, ColMajor
 from EigenIPC.PyEigenIPC import toNumpyDType
-from EigenIPC.PyBindEigenIPC import dtype as sharsor_dtype 
+from EigenIPC.PyEigenIPC import dtype as sharsor_dtype 
 from EigenIPC.PyEigenIPC import Journal as Logger
 from EigenIPC.PyEigenIPC import LogType
     

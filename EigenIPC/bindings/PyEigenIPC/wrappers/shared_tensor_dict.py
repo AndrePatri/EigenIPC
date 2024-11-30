@@ -1,10 +1,10 @@
 from EigenIPC.PyEigenIPCExt.wrappers.shared_data_view import SharedTWrapper
-from EigenIPC.PyBindEigenIPC import VLevel
-from EigenIPC.PyBindEigenIPC import dtype as sharsor_dtype, toNumpyDType
+from EigenIPC.PyEigenIPC import VLevel
+from EigenIPC.PyEigenIPC import dtype as sharsor_dtype, toNumpyDType
 
-from EigenIPC.PyBindEigenIPC import StringTensorServer, StringTensorClient
+from EigenIPC.PyEigenIPC import StringTensorServer, StringTensorClient
 
-from EigenIPC.PyBindEigenIPC import Journal, LogType
+from EigenIPC.PyEigenIPC import Journal, LogType
 
 import numpy as np
 

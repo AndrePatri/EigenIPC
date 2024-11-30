@@ -1,5 +1,5 @@
 from EigenIPC.PyEigenIPC import ServerFactory
-from EigenIPC.PyBindEigenIPC import StringTensorServer
+from EigenIPC.PyEigenIPC import StringTensorServer
 
 from typing import Union
 
