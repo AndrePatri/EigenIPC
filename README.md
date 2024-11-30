@@ -16,7 +16,7 @@ Rt-friendly **shared matrices** built on top of **POSIX IPC** and [**Eigen**](ht
 - Additionally, a `StringTensor` wrapper object designed for sharing arrays of UTF8 encoded-strings is also provided.
 - Producer/Consumer wrappers built on top of [boost::interprocess](https://www.boost.org/doc/libs/1_46_0/doc/html/interprocess/synchronization_mechanisms.html)'s named condition variables and mutex + EigenIPC's client/server for system-wide single producer - multiple consumers triggering
 
-The library is also fully binded in Python, codename `PyEigenIPC`, and allows for seamless integration with the popular NumPy library.
+The library is also fully binded in Python, codename `PyEigenIPC`, and exposes some convenient interfaces with the popular NumPy library.
 
 ### 2. Documentation: 
 
