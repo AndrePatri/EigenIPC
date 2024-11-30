@@ -5,18 +5,18 @@
 </h2>
 
 <!-- ![GitHub-Mark-Light](docs/icon-light.svg#gh-dark-mode-only)![GitHub-Mark-Dark](docs/icon-dark.svg#gh-light-mode-only) -->
-Rt-friendly 2D **shared tensors** built on top of **POSIX IPC** standards and [**Eigen**](https://eigen.tuxfamily.org/index.php?title=Main_Page) library, shipped with Python bindings and [**NumPy**](https://numpy.org/) support.
+Rt-friendly **shared matrices** built on top of **POSIX IPC** and [**Eigen**](https://eigen.tuxfamily.org/index.php?title=Main_Page) libraries, shipped with Python bindings and [**NumPy**](https://numpy.org/) support.
 
 ### 1. Features:
 - EigenIPC leverages *POSIX* *shared memory* and *semaphores* primitives in conjunction with Eigen's matrix API to create shared views of tensors over **multiple processes**, which can then be safely accessed and manipulated in a **rt-compatible** way.
-- EigenIPC exposes to the user a convenient `Client/Server` API to create, read, write and manage shared tensors from separate processes (on the same machine) with **minimum latency**, and **internally takes care of** avoiding **race conditions** on the data. Note that while only one instance of a server is allowed, an arbitrary number of clients can be created. To make also non-atomic operations on the shared data safe, the EigenIPC also exposes methods for manually handling data acquisition and release.
+- EigenIPC exposes to the user a convenient `Client/Server` API to create, read, write and manage shared tensors from separate processes (on the same machine) with minimum latency, and internally takes care of avoiding race conditions on the data. Note that while only one instance of a server is allowed, an arbitrary number of clients can be created. To make also non-atomic operations on the shared data safe, the EigenIPC also exposes methods for manually handling data acquisition and release.
 - EigenIPC is templatized so as to support the creation of shared tensors with
   - different datatypes (`bool`, `int`, `float` and `double`).
   - `ColMajor` (column-major) and `RowMajor` (row-major) layouts.
 - Additionally, a `StringTensor` wrapper object designed for sharing arrays of UTF8 encoded-strings is also provided.
 - Producer/Consumer wrappers built on top of [boost::interprocess](https://www.boost.org/doc/libs/1_46_0/doc/html/interprocess/synchronization_mechanisms.html)'s named condition variables and mutex + EigenIPC's client/server for system-wide single producer - multiple consumers triggering
 
-The library is also **fully binded** in Python, codename `PyEigenIPC`, and allows for seamless integration with the popular NumPy library.
+The library is also fully binded in Python, codename `PyEigenIPC`, and allows for seamless integration with the popular NumPy library.
 
 ### 2. Documentation: 
 
