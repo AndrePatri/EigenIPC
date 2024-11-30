@@ -1,6 +1,6 @@
 from EigenIPC.PyEigenIPCExt.wrappers.shared_data_view import SharedTWrapper
 from EigenIPC.PyEigenIPC import VLevel
-from EigenIPC.PyEigenIPC import dtype as sharsor_dtype, toNumpyDType
+from EigenIPC.PyEigenIPC import dtype as eigenipc_dtype, toNumpyDType
 
 from EigenIPC.PyEigenIPC import StringTensorServer, StringTensorClient
 
@@ -100,7 +100,7 @@ class SharedTensorDict():
                     n_cols = 1, 
                     verbose = verbose, 
                     vlevel = vlevel,
-                    dtype=sharsor_dtype.Int,
+                    dtype=eigenipc_dtype.Int,
                     fill_value=-1,
                     safe = safe,
                     force_reconnection = force_reconnection)
@@ -112,7 +112,7 @@ class SharedTensorDict():
                     is_server = is_server, 
                     verbose = verbose, 
                     vlevel = vlevel,
-                    dtype=sharsor_dtype.Int,
+                    dtype=eigenipc_dtype.Int,
                     fill_value=-1,
                     safe = safe)
                 

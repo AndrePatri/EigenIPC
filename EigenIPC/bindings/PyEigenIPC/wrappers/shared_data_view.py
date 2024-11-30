@@ -4,7 +4,7 @@ from EigenIPC.PyEigenIPC import ServerFactory, ClientFactory
 from EigenIPC.PyEigenIPC import VLevel
 from EigenIPC.PyEigenIPC import RowMajor, ColMajor
 from EigenIPC.PyEigenIPC import toNumpyDType
-from EigenIPC.PyEigenIPC import dtype as sharsor_dtype 
+from EigenIPC.PyEigenIPC import dtype as eigenipc_dtype 
 from EigenIPC.PyEigenIPC import Journal as Logger
 from EigenIPC.PyEigenIPC import LogType
     
@@ -18,7 +18,7 @@ class SharedTWrapper:
             n_cols: int = None, 
             verbose: bool = False, 
             vlevel: VLevel = VLevel.V0,
-            dtype: sharsor_dtype = sharsor_dtype.Float,
+            dtype: eigenipc_dtype = eigenipc_dtype.Float,
             with_torch_view: bool = False,
             with_gpu_mirror: bool = False,
             fill_value = None,

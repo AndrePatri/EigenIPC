@@ -137,7 +137,7 @@ class FromRos():
         
         self._subscriber.synch()
     
-    def _to_sharsor_dtype(self,
+    def _to_eigenipc_dtype(self,
                     np_dtype):
 
         if np_dtype == np.bool_:
@@ -175,7 +175,7 @@ class FromRos():
                             verbose = self._verbose, 
                             vlevel = self._vlevel, 
                             force_reconnection = self._force_reconnection, 
-                            dtype = self._to_sharsor_dtype(self._subscriber.dtype()),
+                            dtype = self._to_eigenipc_dtype(self._subscriber.dtype()),
                             safe = True)
             
                 self._server.run() # run server
