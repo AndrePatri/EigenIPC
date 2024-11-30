@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 
-set(LIBRARY_NAME SharsorIPCppDocs)
+set(LIBRARY_NAME EigenIPCDocs)
 add_definitions("-DLIBRARY_NAME=${LIBRARY_NAME}")
 
 project(${LIBRARY_NAME} VERSION 0.1.0)

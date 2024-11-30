@@ -21,7 +21,7 @@ requirements:
 
     - python
 
-  home: https://github.com/AndrePatri/SharsorIPCpp
+  home: https://github.com/AndrePatri/EigenIPC
 
   license: GPL-v2
 

@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(MyLibrary)
 
-# Find the SharsorIPCpp package
-find_package(SharsorIPCpp REQUIRED)
+# Find the EigenIPC package
+find_package(EigenIPC REQUIRED)
 
 find_package(Eigen3 3.3 REQUIRED)
 
@@ -10,5 +10,5 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 add_executable(${my_target_name} ${my_target_source})
 
-# link against SharsorIPCpp
-target_link_libraries(${my_target_name} PRIVATE ${other_libraries} SharsorIPCpp::SharsorIPCpp)
+# link against EigenIPC
+target_link_libraries(${my_target_name} PRIVATE ${other_libraries} EigenIPC::EigenIPC)
