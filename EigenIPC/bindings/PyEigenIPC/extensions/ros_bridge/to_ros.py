@@ -1,9 +1,9 @@
 from EigenIPC.PyEigenIPC import Client
-from EigenIPC.PyEigenIPC import StringTensorClient
+from EigenIPC.PyBindEigenIPC import StringTensorClient
 
 from typing import Union
 
-from EigenIPC.PyEigenIPC.extensions.ros_bridge.defs import NamingConventions
+from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.defs import NamingConventions
 
 from EigenIPC.PyEigenIPC import Journal, VLevel, LogType
 from EigenIPC.PyEigenIPC import toNumpyDType, dtype
@@ -138,7 +138,7 @@ class ToRos():
                             LogType.WARN,
                             throw_when_excep = True)
 
-            from EigenIPC.PyEigenIPC.extensions.ros_bridge.ros1_utils import Ros1Publisher
+            from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.ros1_utils import Ros1Publisher
 
             if not self._is_string_tensor:
 
@@ -178,7 +178,7 @@ class ToRos():
                             LogType.EXCEP,
                             throw_when_excep = True)
                             
-            from EigenIPC.PyEigenIPC.extensions.ros_bridge.ros2_utils import Ros2Publisher
+            from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.ros2_utils import Ros2Publisher
 
             if not self._is_string_tensor:
 

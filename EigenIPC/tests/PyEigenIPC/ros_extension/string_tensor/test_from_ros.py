@@ -1,5 +1,5 @@
-from EigenIPC.PyEigenIPC.extensions.ros_bridge.from_ros import *
-from EigenIPC.PyEigenIPC.wrappers.shared_data_view import *
+from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.from_ros import *
+from EigenIPC.PyEigenIPCExt.wrappers.shared_data_view import *
 
 from EigenIPC.PyEigenIPC import *
 

@@ -18,8 +18,8 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 # the chance of accidentally exporting symbols that aren't intended to be
 # part of your library's public API
 
-set(PyBindName "PyBindEigenIPC")
-set(PyLayerName "PyEigen")
+set(PyBindName "PyEigenIPC")
+set(PyExtsName "PyEigenIPCExt")
 
 # set(BINDINGS_BINARY_DIR ${CMAKE_BINARY_DIR}/bindings/${LIBRARY_NAME}/${PyBindName})
 
@@ -65,7 +65,7 @@ install(FILES __init__.py DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE}/${L
 # install python wrappers
 install(
     DIRECTORY wrappers/
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE}/${LIBRARY_NAME}/${PyLayerName}/wrappers
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE}/${LIBRARY_NAME}/${PyExtsName}/wrappers
 )
 
 # if(${WITH_ROS_BRIDGE})
@@ -120,14 +120,14 @@ install(
 #         file(GLOB_RECURSE ROS2_MESSAGES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/extensions/ros_bridge/msgs/ros2/ *.msg)
 
 #         foreach(MSG_FILE ${ROS2_MESSAGES})
-#             rosidl_generate_interfaces(${PyLayerName}
+#             rosidl_generate_interfaces(${PyExtsName}
 #                 "${CMAKE_CURRENT_SOURCE_DIR}/extensions/ros_bridge/msgs/ros2/${MSG_FILE}"
 #             )
 #         endforeach()
 
 #         install(
 #             DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/extensions/ros_bridge/msgs/ros2/
-#             DESTINATION share/${PyLayerName}/msg
+#             DESTINATION share/${PyExtsName}/msg
 #             FILES_MATCHING PATTERN "*.msg"
 #         )
 
@@ -146,10 +146,10 @@ if(${WITH_ROS_BRIDGE})
     # install python extensions
     install(
         DIRECTORY extensions/
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE}/${LIBRARY_NAME}/${PyLayerName}/extensions
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE}/${LIBRARY_NAME}/${PyExtsName}/extensions
     )
 
 endif()
 
 # add init file for package
-install(FILES __init__.py DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE}/${LIBRARY_NAME}/${PyLayerName})
+install(FILES __init__.py DESTINATION ${CMAKE_INSTALL_PREFIX}/${PYTHON_SITE}/${LIBRARY_NAME}/${PyExtsName})

@@ -1,9 +1,9 @@
 from EigenIPC.PyEigenIPC import ServerFactory
-from EigenIPC.PyEigenIPC import StringTensorServer
+from EigenIPC.PyBindEigenIPC import StringTensorServer
 
 from typing import Union
 
-from EigenIPC.PyEigenIPC.extensions.ros_bridge.defs import NamingConventions
+from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.defs import NamingConventions
 
 from EigenIPC.PyEigenIPC import Journal, VLevel, LogType, dtype
 from EigenIPC.PyEigenIPC import toNumpyDType
@@ -81,7 +81,7 @@ class FromRos():
                             LogType.WARN,
                             throw_when_excep = True)
 
-            from EigenIPC.PyEigenIPC.extensions.ros_bridge.ros1_utils import Ros1Subscriber
+            from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.ros1_utils import Ros1Subscriber
 
             self._subscriber = Ros1Subscriber(basename = self._basename,
                                 namespace = self._namespace,
@@ -100,7 +100,7 @@ class FromRos():
                             LogType.EXCEP,
                             throw_when_excep = True)
                             
-            from EigenIPC.PyEigenIPC.extensions.ros_bridge.ros2_utils import Ros2Subscriber
+            from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.ros2_utils import Ros2Subscriber
 
             self._subscriber = Ros2Subscriber(basename = self._basename,
                                 namespace = self._namespace,

@@ -1,6 +1,6 @@
-from EigenIPC.PyEigenIPC.extensions.ros_bridge.abstractions import RosPublisher
-from EigenIPC.PyEigenIPC.extensions.ros_bridge.abstractions import RosSubscriber
-from EigenIPC.PyEigenIPC.extensions.ros_bridge.abstractions import toRosDType
+from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.abstractions import RosPublisher
+from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.abstractions import RosSubscriber
+from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.abstractions import toRosDType
 
 import rospy
 
