@@ -1,6 +1,6 @@
-from EigenIPC.PySharsor.extensions.ros_bridge.abstractions import RosPublisher
-from EigenIPC.PySharsor.extensions.ros_bridge.abstractions import RosSubscriber
-from EigenIPC.PySharsor.extensions.ros_bridge.abstractions import toRosDType
+from EigenIPC.PyEigenIPC.extensions.ros_bridge.abstractions import RosPublisher
+from EigenIPC.PyEigenIPC.extensions.ros_bridge.abstractions import RosSubscriber
+from EigenIPC.PyEigenIPC.extensions.ros_bridge.abstractions import toRosDType
 
 import rospy
 

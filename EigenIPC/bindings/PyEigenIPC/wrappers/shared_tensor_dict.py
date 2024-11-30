@@ -1,4 +1,4 @@
-from EigenIPC.PySharsor.wrappers.shared_data_view import SharedTWrapper
+from EigenIPC.PyEigenIPC.wrappers.shared_data_view import SharedTWrapper
 from EigenIPC.PyEigenIPC import VLevel
 from EigenIPC.PyEigenIPC import dtype as sharsor_dtype, toNumpyDType
 

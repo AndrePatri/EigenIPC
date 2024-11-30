@@ -67,7 +67,7 @@ class TestPerfBenchBase(unittest.TestCase):
 
         self.server_write = ServerFactory(self.rows,
                                     self.cols,
-                                    basename="PySharsor_write" + \
+                                    basename="PyEigenIPC_write" + \
                                     str(self.layout)  +
                                     str(self.data_type),
                                     namespace=namespace,
@@ -77,7 +77,7 @@ class TestPerfBenchBase(unittest.TestCase):
                                     dtype=self.data_type,
                                     layout=self.layout)
 
-        self.client_read = ClientFactory(basename="PySharsor_write" + \
+        self.client_read = ClientFactory(basename="PyEigenIPC_write" + \
                                     str(self.layout)  +
                                     str(self.data_type),
                                     namespace=namespace,

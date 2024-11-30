@@ -19,7 +19,7 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 # part of your library's public API
 
 set(PyBindName "PyEigenIPC")
-set(PyLayerName "PySharsor")
+set(PyLayerName "PyEigenIPC")
 
 # set(BINDINGS_BINARY_DIR ${CMAKE_BINARY_DIR}/bindings/${LIBRARY_NAME}/${PyBindName})
 

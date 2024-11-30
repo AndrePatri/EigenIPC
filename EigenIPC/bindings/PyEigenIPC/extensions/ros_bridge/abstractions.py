@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from typing import List
 
-from EigenIPC.PySharsor.extensions.ros_bridge.defs import NamingConventions
+from EigenIPC.PyEigenIPC.extensions.ros_bridge.defs import NamingConventions
 from EigenIPC.PyEigenIPC import Journal, VLevel, LogType
 
 # same naming between ros1 and ros2

@@ -1,5 +1,5 @@
-from EigenIPC.PySharsor.extensions.ros_bridge import *
-from EigenIPC.PySharsor.wrappers.shared_data_view import *
+from EigenIPC.PyEigenIPC.extensions.ros_bridge import *
+from EigenIPC.PyEigenIPC.wrappers.shared_data_view import *
 
 from EigenIPC.PyEigenIPC import *
 
