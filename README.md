@@ -40,7 +40,7 @@ The tests include some consistency checks to ensure the library works properly a
 
 ### 4. Install from Anaconda: 
 
-The full library (including PyEigenIPC) is also deployed on Anaconda at [sharsor_ipcpp](https://anaconda.org/AndrePatri/sharsor_ipcpp/files), with Python support from versions 3.7 up to 3.11. 
+The full library (including PyEigenIPC) is also deployed on Anaconda at [eigenipc](https://anaconda.org/AndrePatri/eigenipc/files), with Python support from versions 3.7 up to 3.11. 
 Please note that these Anaconda versions are periodically updated starting from the *main* branch, so cutting-edge features might not be available there.
 
 ### 5. Using EigenIPC from another package 
