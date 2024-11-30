@@ -18,8 +18,8 @@ set(CMAKE_VISIBILITY_INLINES_HIDDEN 1)
 # the chance of accidentally exporting symbols that aren't intended to be
 # part of your library's public API
 
-set(PyBindName "PyEigenIPC")
-set(PyLayerName "PyEigenIPC")
+set(PyBindName "PyBindEigenIPC")
+set(PyLayerName "PyEigen")
 
 # set(BINDINGS_BINARY_DIR ${CMAKE_BINARY_DIR}/bindings/${LIBRARY_NAME}/${PyBindName})
 
