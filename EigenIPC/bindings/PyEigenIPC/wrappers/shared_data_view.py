@@ -23,7 +23,12 @@ class SharedTWrapper:
             with_gpu_mirror: bool = False,
             fill_value = None,
             safe = True,
-            force_reconnection = False):
+            force_reconnection = False,
+            optimize_mem: bool = False):
+
+        self._optimize_mem=optimize_mem # only allocate a copy of reduced size
+        self._n_rows_minimal=n_rows
+        self._n_cols_minimal=n_cols
 
         self.basename = basename
         self.namespace = namespace
@@ -155,10 +160,16 @@ class SharedTWrapper:
 
         self.n_rows = self._shared_mem.getNRows()
         self.n_cols = self._shared_mem.getNCols()
-
-        # we create views as big as the underlying shared memory
+        # by default, we create views as big as the underlying shared memory
         # in case only a portion of it is needed, this is not optimal
         # memory-wise. However, this way we gain in simplicity
+
+        if not self.is_server and self._optimize_mem:
+            # if specified, we just allocated what's strictly needed
+            if self._n_rows_minimal is not None:
+                self.n_rows=self._n_rows_minimal
+            if self._n_cols_minimal is not None:
+                self.n_cols=self._n_cols_minimal
                 
         if self.fill_value is not None:
             self._numpy_view = np.full((self.n_rows, self.n_cols),
@@ -371,19 +382,21 @@ class SharedTWrapper:
         
     def synch_all(self, 
             read: bool = True, 
-            retry = False):
+            retry = False,
+            row_index: int = 0,
+            col_index: int = 0):
         
         # synch whole view from shared memory
         if retry:
 
-            self.synch_retry(row_index=0, col_index=0, 
+            self.synch_retry(row_index=row_index, col_index=col_index, 
                         n_rows=self.n_rows, n_cols=self.n_cols, 
                         read=read)
             return True
 
         else:
             
-            return self.synch(row_index=0, col_index=0, 
+            return self.synch(row_index=row_index, col_index=col_index, 
                         n_rows=self.n_rows, n_cols=self.n_cols, 
                         read=read)
 
