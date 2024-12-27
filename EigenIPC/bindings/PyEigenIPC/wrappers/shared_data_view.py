@@ -148,6 +148,12 @@ class SharedTWrapper:
 
         return self._is_running
     
+    def getNRows(self):
+        return self._n_rows_shared_mem
+
+    def getNCols(self):
+        return self._n_cols_shared_mem
+        
     def run(self):
     
         if self.is_server:
@@ -163,6 +169,9 @@ class SharedTWrapper:
         # by default, we create views as big as the underlying shared memory
         # in case only a portion of it is needed, this is not optimal
         # memory-wise. However, this way we gain in simplicity
+        
+        self._n_rows_shared_mem=self.n_rows
+        self._n_cols_shared_mem=self.n_cols
 
         if not self.is_server and self._optimize_mem:
             # if specified, we just allocated what's strictly needed
