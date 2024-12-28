@@ -212,16 +212,23 @@ class SharedTWrapper:
     def write(self, 
             data, 
             row_index: int, 
-            col_index: int):
+            col_index: int,
+            row_index_view = None, 
+            col_index_view = None):
         
+        if row_index_view is None:
+            row_index_view=row_index
+        if col_index_view is None:
+            col_index_view=col_index
+
         if isinstance(data, (int, float, bool,
                             np.float32, np.float64)):  
             
             # write scalar into numpy view
-            self._numpy_view[row_index, col_index] = data
+            self._numpy_view[row_index_view, col_index_view] = data
             # write to shared memory
-            return self._shared_mem.write(self._numpy_view[row_index:row_index + 1, 
-                                                        col_index:col_index + 1], 
+            return self._shared_mem.write(self._numpy_view[row_index_view:row_index_view + 1, 
+                                                        col_index_view:col_index_view + 1], 
                                         row_index, col_index)
         
         if isinstance(data, np.ndarray):  # Check if data is a numpy array
@@ -233,7 +240,7 @@ class SharedTWrapper:
                     LogType.EXCEP,
                     throw_when_excep = True)
             if not self._fits_into(data, self._numpy_view, 
-                                row_index, col_index):
+                                row_index_view, col_index_view):
                 message = "Provided data does not fit in numpy view!!"
                 Logger.log(self.__class__.__name__,
                     "write",
@@ -243,11 +250,11 @@ class SharedTWrapper:
             
             input_rows, input_cols = data.shape
             # insert data into part of numpy view
-            self._numpy_view[row_index:row_index + input_rows, 
-                    col_index:col_index + input_cols] = data
+            self._numpy_view[row_index_view:row_index_view + input_rows, 
+                    col_index_view:col_index_view + input_cols] = data
             # write corresponding part of numpy view to memory
-            return self._shared_mem.write(self._numpy_view[row_index:row_index + input_rows, 
-                        col_index:col_index + input_cols], row_index, col_index)                
+            return self._shared_mem.write(self._numpy_view[row_index_view:row_index_view + input_rows, 
+                        col_index_view:col_index_view + input_cols], row_index, col_index)                
 
         # here reached only if not got one of the valid dtypes
         message = "Unsupported data type provided. " + \
@@ -262,26 +269,37 @@ class SharedTWrapper:
     def write_retry(self,
             data, 
             row_index: int, 
-            col_index: int):
+            col_index: int,
+            row_index_view = None, 
+            col_index_view = None):
 
         # tries writing until success
         while self._shared_mem.isRunning() and not self.write(data=data,
                     row_index=row_index,
-                    col_index=col_index):
+                    col_index=col_index,
+                    row_index_view=row_index_view,
+                    col_index_view=col_index_view):
             
             continue
 
     def read(self, 
             row_index: int, 
-            col_index: int, 
+            col_index: int,
+            row_index_view = None, 
+            col_index_view = None, 
             data = None):
-            
+        
+        if row_index_view is None:
+            row_index_view=row_index
+        if col_index_view is None:
+            col_index_view=col_index
+
         if data is None:
             # we return a scalar reading of the underlying shared memory
-            success = self._shared_mem.read(self._numpy_view[row_index:row_index + 1, 
-                col_index:col_index + 1], row_index, col_index)
-            return self._numpy_view[row_index, 
-                col_index].item(), success
+            success = self._shared_mem.read(self._numpy_view[row_index_view:row_index_view + 1, 
+                col_index_view:col_index_view + 1], row_index, col_index)
+            return self._numpy_view[row_index_view, 
+                col_index_view].item(), success
         
         else:
             
@@ -305,14 +323,14 @@ class SharedTWrapper:
                 input_rows, input_cols = data.shape
 
                 # update block of numpy view from shared memory
-                success = self._shared_mem.read(self._numpy_view[row_index:row_index + input_rows, 
-                        col_index:col_index + input_cols], row_index, col_index)
+                success = self._shared_mem.read(self._numpy_view[row_index_view:row_index_view + input_rows, 
+                        col_index_view:col_index_view + input_cols], row_index, col_index)
                 if not success:
                     return None, False
                 
                 # copy data into part of numpy view
-                data[:, :] = self._numpy_view[row_index:row_index + input_rows, 
-                        col_index:col_index + input_cols]
+                data[:, :] = self._numpy_view[row_index_view:row_index_view + input_rows, 
+                        col_index_view:col_index_view + input_cols]
                 
                 return None, True
         
@@ -328,7 +346,9 @@ class SharedTWrapper:
 
     def read_retry(self, 
             row_index: int, 
-            col_index: int, 
+            col_index: int,
+            row_index_view = None, 
+            col_index_view = None,
             data = None):
         
         # tries reading until success
@@ -337,6 +357,8 @@ class SharedTWrapper:
             data_read, read_done = self.read(
                                 row_index=row_index,
                                 col_index=col_index,
+                                row_index_view=row_index_view,
+                                col_index_view=col_index_view,
                                 data=data)
             if read_done:
                 return data_read, read_done
@@ -348,6 +370,8 @@ class SharedTWrapper:
         col_index: int, 
         n_rows: int,
         n_cols: int,
+        row_index_view = None, 
+        col_index_view = None, 
         read: bool = True):
 
         # synchs a block of the internal views from shared memory
@@ -356,21 +380,26 @@ class SharedTWrapper:
         # Calculate ending indices
         end_row_index = row_index + n_rows
         end_col_index = col_index + n_cols
+        if row_index_view is None:
+            row_index_view=row_index
+        if col_index_view is None:
+            col_index_view=col_index
 
         # Check if we are withing bounds
-        fits = (end_row_index <= self._numpy_view.shape[0] \
-            and end_col_index <= self._numpy_view.shape[1])
+        fits = (end_row_index <= self._n_rows_shared_mem \
+            and end_col_index <= self._n_cols_shared_mem)
         if not fits:
+            print("no fit")
             return False
         
         if read:
-            success = self._shared_mem.read(self._numpy_view[row_index:row_index + n_rows, 
-                    col_index:col_index + n_cols], row_index, col_index)
+            success = self._shared_mem.read(self._numpy_view[row_index_view:row_index_view + n_rows, 
+                    col_index_view:col_index_view + n_cols], row_index, col_index)
             
             return success
         else:
-            success = self._shared_mem.write(self._numpy_view[row_index:row_index + n_rows, 
-                    col_index:col_index + n_cols], row_index, col_index)
+            success = self._shared_mem.write(self._numpy_view[row_index_view:row_index_view + n_rows, 
+                    col_index_view:col_index_view + n_cols], row_index, col_index)
             
             return success
     
@@ -379,6 +408,8 @@ class SharedTWrapper:
         col_index: int, 
         n_rows: int,
         n_cols: int,
+        row_index_view = None, 
+        col_index_view = None, 
         read: bool = True):
 
         # tries synching until success
@@ -386,20 +417,33 @@ class SharedTWrapper:
                         col_index=col_index,
                         n_rows=n_rows,
                         n_cols=n_cols,
+                        row_index_view=row_index_view,
+                        col_index_view=col_index_view,
                         read=read):
+            print("gnignigngingignign")
+            print(self.namespace+self.basename)
+            print(row_index)
+            print(col_index)
+            print(n_rows)
+            print(n_cols)
+            print(self._n_rows_shared_mem)
+            print(self._n_cols_shared_mem)
             continue
         
     def synch_all(self, 
             read: bool = True, 
             retry = False,
             row_index: int = 0,
-            col_index: int = 0):
+            col_index: int = 0,
+            row_index_view = None, 
+            col_index_view = None):
         
         # synch whole view from shared memory
         if retry:
 
             self.synch_retry(row_index=row_index, col_index=col_index, 
                         n_rows=self.n_rows, n_cols=self.n_cols, 
+                        row_index_view=row_index_view,col_index_view=col_index_view,
                         read=read)
             return True
 
@@ -407,6 +451,7 @@ class SharedTWrapper:
             
             return self.synch(row_index=row_index, col_index=col_index, 
                         n_rows=self.n_rows, n_cols=self.n_cols, 
+                        row_index_view=row_index_view,col_index_view=col_index_view,
                         read=read)
 
     def gpu_mirror_exists(self):
