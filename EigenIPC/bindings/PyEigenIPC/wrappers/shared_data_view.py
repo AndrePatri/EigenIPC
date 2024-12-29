@@ -389,7 +389,6 @@ class SharedTWrapper:
         fits = (end_row_index <= self._n_rows_shared_mem \
             and end_col_index <= self._n_cols_shared_mem)
         if not fits:
-            print("no fit")
             return False
         
         if read:
@@ -420,14 +419,6 @@ class SharedTWrapper:
                         row_index_view=row_index_view,
                         col_index_view=col_index_view,
                         read=read):
-            print("gnignigngingignign")
-            print(self.namespace+self.basename)
-            print(row_index)
-            print(col_index)
-            print(n_rows)
-            print(n_cols)
-            print(self._n_rows_shared_mem)
-            print(self._n_cols_shared_mem)
             continue
         
     def synch_all(self, 
