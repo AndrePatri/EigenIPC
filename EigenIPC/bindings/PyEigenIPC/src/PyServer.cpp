@@ -121,125 +121,86 @@ void PyEigenIPC::PyServer::bindServerT(pybind11::module &m, const char* name) {
 }
 
 pybind11::object PyEigenIPC::PyServer::ServerFactory(int n_rows,
-                                    int n_cols,
-                                    std::string basename,
-                                    std::string name_space,
-                                    bool verbose,
-                                    VLevel vlevel,
-                                    bool safe,
-                                    bool force_reconnection,
-                                    DType dtype,
-                                    int layout) {
+                                                    int n_cols,
+                                                    std::string basename,
+                                                    std::string name_space,
+                                                    bool verbose,
+                                                    VLevel vlevel,
+                                                    bool safe,
+                                                    bool force_reconnection,
+                                                    DType dtype,
+                                                    int layout) {
 
     switch (layout) {
 
-        case EigenIPC::ColMajor:
+        case EigenIPC::ColMajor: {
 
             switch (dtype) {
 
-                case DType::Bool:
+                case DType::Bool: {
+                    auto ptr = std::make_shared<EigenIPC::Server<bool, EigenIPC::ColMajor>>(
+                        n_rows, n_cols, basename, name_space, verbose, vlevel, force_reconnection, safe);
+                    return pybind11::cast(ptr);
+                }
 
-                    return pybind11::cast(PyEigenIPC::ServerWrapper(new pybind11::object(
-                                          pybind11::cast(std::make_shared<EigenIPC::Server<bool, EigenIPC::ColMajor>>(n_rows,
-                                                                                                                        n_cols,
-                                                                                                                        basename,
-                                                                                                                        name_space,
-                                                                                                                        verbose,
-                                                                                                                        vlevel,
-                                                                                                                        force_reconnection,
-                                                                                                                        safe)))));
-                case DType::Int:
+                case DType::Int: {
+                    auto ptr = std::make_shared<EigenIPC::Server<int, EigenIPC::ColMajor>>(
+                        n_rows, n_cols, basename, name_space, verbose, vlevel, force_reconnection, safe);
+                    return pybind11::cast(ptr);
+                }
 
-                    return pybind11::cast(PyEigenIPC::ServerWrapper(new pybind11::object(
-                                                      pybind11::cast(std::make_shared<EigenIPC::Server<int, EigenIPC::ColMajor>>(n_rows,
-                                                                                                                                n_cols,
-                                                                                                                                basename,
-                                                                                                                                name_space,
-                                                                                                                                verbose,
-                                                                                                                                vlevel,
-                                                                                                                                force_reconnection,
-                                                                                                                                safe)))));
-                case DType::Float:
+                case DType::Float: {
+                    auto ptr = std::make_shared<EigenIPC::Server<float, EigenIPC::ColMajor>>(
+                        n_rows, n_cols, basename, name_space, verbose, vlevel, force_reconnection, safe);
+                    return pybind11::cast(ptr);
+                }
 
-                    return pybind11::cast(PyEigenIPC::ServerWrapper(new pybind11::object(
-                                                      pybind11::cast(std::make_shared<EigenIPC::Server<float, EigenIPC::ColMajor>>(n_rows,
-                                                                                                                                n_cols,
-                                                                                                                                basename,
-                                                                                                                                name_space,
-                                                                                                                                verbose,
-                                                                                                                                vlevel,
-                                                                                                                                force_reconnection,
-                                                                                                                                safe)))));
-                case DType::Double:
+                case DType::Double: {
+                    auto ptr = std::make_shared<EigenIPC::Server<double, EigenIPC::ColMajor>>(
+                        n_rows, n_cols, basename, name_space, verbose, vlevel, force_reconnection, safe);
+                    return pybind11::cast(ptr);
+                }
 
-                    return pybind11::cast(PyEigenIPC::ServerWrapper(new pybind11::object(
-                                                      pybind11::cast(std::make_shared<EigenIPC::Server<double, EigenIPC::ColMajor>>(n_rows,
-                                                                                                                                n_cols,
-                                                                                                                                basename,
-                                                                                                                                name_space,
-                                                                                                                                verbose,
-                                                                                                                                vlevel,
-                                                                                                                                force_reconnection,
-                                                                                                                                safe)))));
                 default:
-
                     throw std::runtime_error("Invalid dtype specified!");
             }
+        }
 
-        case EigenIPC::RowMajor:
+        case EigenIPC::RowMajor: {
 
             switch (dtype) {
 
-                case DType::Bool:
+                case DType::Bool: {
+                    auto ptr = std::make_shared<EigenIPC::Server<bool, EigenIPC::RowMajor>>(
+                        n_rows, n_cols, basename, name_space, verbose, vlevel, force_reconnection, safe);
+                    return pybind11::cast(ptr);
+                }
 
-                    return pybind11::cast(PyEigenIPC::ServerWrapper(new pybind11::object(
-                                                      pybind11::cast(std::make_shared<EigenIPC::Server<bool, EigenIPC::RowMajor>>(n_rows,
-                                                                                                                                n_cols,
-                                                                                                                                basename,
-                                                                                                                                name_space,
-                                                                                                                                verbose,
-                                                                                                                                vlevel,
-                                                                                                                                force_reconnection,
-                                                                                                                                safe)))));
-                case DType::Int:
-                    return pybind11::cast(PyEigenIPC::ServerWrapper(new pybind11::object(
-                                                      pybind11::cast(std::make_shared<EigenIPC::Server<int, EigenIPC::RowMajor>>(n_rows,
-                                                                                                                                n_cols,
-                                                                                                                                basename,
-                                                                                                                                name_space,
-                                                                                                                                verbose,
-                                                                                                                                vlevel,
-                                                                                                                                force_reconnection,
-                                                                                                                                safe)))));
-                case DType::Float:
-                    return pybind11::cast(PyEigenIPC::ServerWrapper(new pybind11::object(
-                                                      pybind11::cast(std::make_shared<EigenIPC::Server<float, EigenIPC::RowMajor>>(n_rows,
-                                                                                                                                n_cols,
-                                                                                                                                basename,
-                                                                                                                                name_space,
-                                                                                                                                verbose,
-                                                                                                                                vlevel,
-                                                                                                                                force_reconnection,
-                                                                                                                                safe)))));
-                case DType::Double:
-                    return pybind11::cast(PyEigenIPC::ServerWrapper(new pybind11::object(
-                                                      pybind11::cast(std::make_shared<EigenIPC::Server<double, EigenIPC::RowMajor>>(n_rows,
-                                                                                                                                    n_cols,
-                                                                                                                                    basename,
-                                                                                                                                    name_space,
-                                                                                                                                    verbose,
-                                                                                                                                    vlevel,
-                                                                                                                                    force_reconnection,
-                                                                                                                                    safe)))));
+                case DType::Int: {
+                    auto ptr = std::make_shared<EigenIPC::Server<int, EigenIPC::RowMajor>>(
+                        n_rows, n_cols, basename, name_space, verbose, vlevel, force_reconnection, safe);
+                    return pybind11::cast(ptr);
+                }
+
+                case DType::Float: {
+                    auto ptr = std::make_shared<EigenIPC::Server<float, EigenIPC::RowMajor>>(
+                        n_rows, n_cols, basename, name_space, verbose, vlevel, force_reconnection, safe);
+                    return pybind11::cast(ptr);
+                }
+
+                case DType::Double: {
+                    auto ptr = std::make_shared<EigenIPC::Server<double, EigenIPC::RowMajor>>(
+                        n_rows, n_cols, basename, name_space, verbose, vlevel, force_reconnection, safe);
+                    return pybind11::cast(ptr);
+                }
+
                 default:
-
                     throw std::runtime_error("Invalid dtype specified!");
             }
+        }
 
         default:
-
             throw std::runtime_error("Invalid layout specified!");
-
     }
 }
 
@@ -611,8 +572,6 @@ void PyEigenIPC::PyServer::bindServerFactory(pybind11::module& m,
         pybind11::arg("force_reconnection") = false,
         pybind11::arg("dtype") = DType::Float,
         pybind11::arg("layout") = EigenIPC::RowMajor, // default of numpy and pytorch
-        "Create a new server with the specified arguments and dtype.",
-        pybind11::return_value_policy::reference_internal); // reference_internal keeps the underlying object alive,
-        // as long as the python is
+        "Create a new server with the specified arguments and dtype."); 
 
 }
