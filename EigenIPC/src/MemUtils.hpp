@@ -176,9 +176,10 @@ namespace EigenIPC{
             if (matrix_data == MAP_FAILED) {
 
                 if (verbose) {
-
+                    std::string map_error = "Could not map memory size for " +
+                            mem_path;
                     journal.log(__FUNCTION__,
-                                "Could not map memory size.",
+                                map_error,
                                 LogType::EXCEP);
                 }
 
