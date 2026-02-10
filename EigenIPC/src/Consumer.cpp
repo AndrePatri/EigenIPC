@@ -219,7 +219,8 @@ namespace EigenIPC {
             _journal.log(__FUNCTION__+_unique_id,
                 excep,
                 LogType::EXCEP, 
-                true); // throw exception
+                false); // do throw exception
+            return false;
 
         }
 
