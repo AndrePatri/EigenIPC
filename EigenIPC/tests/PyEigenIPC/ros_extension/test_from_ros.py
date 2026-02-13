@@ -46,6 +46,7 @@ if ros_backend == "ros1":
 
     bridge = FromRos(basename = basename, 
             namespace = namespace, 
+            remap_ns="RemappedData",
             queue_size =1,
             ros_backend=ros_backend,
             vlevel=VLevel.V3,
