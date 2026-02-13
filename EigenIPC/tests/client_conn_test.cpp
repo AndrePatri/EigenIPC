@@ -54,7 +54,7 @@ protected:
 
     ClientReadsBool() :
                    client_ptr(new Client<bool, EigenIPC::MemLayoutDefault>(
-                                     "SharsorBool", name_space,
+                                     "SharedMemBool", name_space,
                                      true,
                                      VLevel::V3)) {
 

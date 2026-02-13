@@ -61,7 +61,7 @@ protected:
     ServerWritesInt() :
                    server_ptr(new Server<int, EigenIPC::MemLayoutDefault>(
                                      N_ROWS, N_COLS,
-                                     "SharsorInt", name_space,
+                                     "SharedMemInt", name_space,
                                      true,
                                      VLevel::V3,
                                      true)),
@@ -130,7 +130,7 @@ protected:
     ServerWritesBool() :
                    server_ptr(new Server<float, EigenIPC::MemLayoutDefault>(
                                      N_ROWS, N_COLS,
-                                     "SharsorBool", name_space,
+                                     "SharedMemBool", name_space,
                                      true,
                                      VLevel::V3,
                                      true)),
