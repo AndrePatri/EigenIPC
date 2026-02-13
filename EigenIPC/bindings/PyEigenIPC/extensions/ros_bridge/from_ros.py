@@ -28,12 +28,14 @@ class FromRos():
                 vlevel = VLevel.V3,
                 verbose: bool = True,
                 force_reconnection: bool = False,
-                node = None):
+                node = None,
+                remap_ns: str = None):
         
         self._queue_size = queue_size
 
         self._basename = basename
         self._namespace = namespace
+        self._remap_ns = self._namespace if remap_ns is None else remap_ns
 
         self._vlevel = vlevel
         self._verbose = verbose
@@ -171,7 +173,7 @@ class FromRos():
                 self._server = ServerFactory(n_rows = self._subscriber.n_rows(), 
                             n_cols = self._subscriber.n_cols(),
                             basename = self._basename,
-                            namespace = self._namespace, 
+                            namespace = self._remap_ns, 
                             verbose = self._verbose, 
                             vlevel = self._vlevel, 
                             force_reconnection = self._force_reconnection, 
