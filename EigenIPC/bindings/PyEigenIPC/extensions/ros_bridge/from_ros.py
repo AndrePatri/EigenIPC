@@ -170,7 +170,7 @@ class FromRos():
                 # creating a shared mem server
                 self._server = ServerFactory(n_rows = self._subscriber.n_rows(), 
                             n_cols = self._subscriber.n_cols(),
-                            basename = self._basename + "AAAAAA",
+                            basename = self._basename,
                             namespace = self._namespace, 
                             verbose = self._verbose, 
                             vlevel = self._vlevel, 
