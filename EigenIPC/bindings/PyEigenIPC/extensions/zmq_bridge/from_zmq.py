@@ -104,10 +104,16 @@ class FromZmq:
 
     def close(self):
 
-        self._subscriber.close()
-    
+        try:
+            self._subscriber.close()
+        except Exception:
+            pass
+
         if self._server is not None:
-            self._server.close()
+            try:
+                self._server.close()
+            except Exception:
+                pass
             self._server = None
 
     def update(self,

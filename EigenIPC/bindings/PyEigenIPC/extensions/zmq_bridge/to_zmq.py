@@ -137,11 +137,17 @@ class ToZmq:
         self._init_tx_buffer()
         self._publisher.run()
 
-    def close(self):
+        def close(self):
 
-        self._publisher.close()
+            try:
+                self._publisher.close()
+            except Exception:
+                pass
 
-        self._client.close()
+            try:
+                self._client.close()
+            except Exception:
+                pass
 
     def update(self,
         retry: bool = True):
