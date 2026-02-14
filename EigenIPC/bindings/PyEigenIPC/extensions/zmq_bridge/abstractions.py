@@ -52,9 +52,8 @@ class ZmqPublisher:
         self._socket = self._context.socket(zmq.PUB)
         self._socket.setsockopt(zmq.LINGER, self._linger_ms)
         self._socket.setsockopt(zmq.SNDHWM, self._queue_size)
-
-        if hasattr(zmq, "CONFLATE"):
-            self._socket.setsockopt(zmq.CONFLATE, 1 if self._conflate else 0)
+        # Do not use socket-level CONFLATE with multipart messages:
+        # it may drop individual frames and corrupt the (header, payload) pair.
 
         if self._bind:
             self._socket.bind(self._endpoint)
@@ -161,9 +160,8 @@ class ZmqSubscriber:
         self._socket.setsockopt(zmq.LINGER, self._linger_ms)
         self._socket.setsockopt(zmq.RCVHWM, self._queue_size)
         self._socket.setsockopt(zmq.SUBSCRIBE, b"")
-
-        if hasattr(zmq, "CONFLATE"):
-            self._socket.setsockopt(zmq.CONFLATE, 1 if self._conflate else 0)
+        # Do not use socket-level CONFLATE with multipart messages:
+        # it may drop individual frames and corrupt the (header, payload) pair.
 
         if self._connect:
             self._socket.connect(self._endpoint)
@@ -192,13 +190,13 @@ class ZmqSubscriber:
 
         frames = self._socket.recv_multipart(copy=False)
 
-        if not self._conflate:
+        if self._conflate:
             while True:
                 events = dict(self._poller.poll(timeout=0))
                 if self._socket not in events:
                     break
                 frames = self._socket.recv_multipart(copy=False)
-
+        
         if len(frames) != 2:
             exception = f"Malformed ZMQ message: expected 2 frames, got {len(frames)}"
             Journal.log(self.__class__.__name__,
