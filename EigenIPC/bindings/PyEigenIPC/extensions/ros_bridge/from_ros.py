@@ -183,7 +183,7 @@ class FromRos():
                 self._server.run() # run server
 
                 self._is_running = True # ready
-        
+
         return sub_success and self._is_running
 
     def close(self):
