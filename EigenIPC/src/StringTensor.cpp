@@ -121,13 +121,13 @@ namespace EigenIPC {
     }
     
     template <>
-    StrServer StringTensor<StrServer>::getSharedMem() {
+    StrServer& StringTensor<StrServer>::getSharedMem() {
 
         return _sh_mem;
     }
 
     template <>
-    StrClient StringTensor<StrClient>::getSharedMem() {
+    StrClient& StringTensor<StrClient>::getSharedMem() {
 
         return _sh_mem;
     }

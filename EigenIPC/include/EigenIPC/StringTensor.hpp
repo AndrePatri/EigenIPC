@@ -100,7 +100,7 @@ namespace EigenIPC {
 
             int getLength();
 
-            ShMemType getSharedMem();
+            ShMemType& getSharedMem();
 
             std::string getNamespace() const;
             std::string getBasename() const;

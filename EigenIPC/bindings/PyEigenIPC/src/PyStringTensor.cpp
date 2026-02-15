@@ -122,13 +122,11 @@ void PyEigenIPC::PyStringTensor::declare_StringTensorServer(py::module &m) {
 
         })
 
-        .def("get_shared_mem", [](EigenIPC::StringTensor<EigenIPC::StrServer>& self) {
-            
-            EigenIPC::StrServer str_server = self.getSharedMem();
-
-            return str_server;
-
-        })
+        .def("get_shared_mem",
+            [](EigenIPC::StringTensor<EigenIPC::StrServer>& self) -> EigenIPC::StrServer& {
+                return self.getSharedMem();
+            },
+            py::return_value_policy::reference_internal)
 
         ;
 
@@ -226,13 +224,11 @@ void PyEigenIPC::PyStringTensor::declare_StringTensorClient(py::module &m) {
 
         })
 
-        .def("get_shared_mem", [](EigenIPC::StringTensor<EigenIPC::StrClient>& self) {
-            
-            EigenIPC::StrClient str_server = self.getSharedMem();
-
-            return str_server;
-
-        })
+        .def("get_shared_mem",
+            [](EigenIPC::StringTensor<EigenIPC::StrClient>& self) -> EigenIPC::StrClient& {
+                return self.getSharedMem();
+            },
+            py::return_value_policy::reference_internal)
 
         ;
 }
