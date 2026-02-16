@@ -8,19 +8,24 @@ STRING_BASENAME = "StringState"
 
 NUMERIC_DATA = np.array(
     [
-        [1.5, -2.0, 3.25],
-        [4.75, 5.0, -6.125],
+        [1.0, -2.0, 3.5, 4.25],
+        [5.5, 6.0, -7.125, 8.75],
+        [9.0, 10.5, 11.25, -12.5],
+        [13.75, -14.0, 15.5, 16.25],
+        [0.0, 1.0, 0.0, 3.0],
     ],
     dtype=np.float32,
 )
 
 STRING_DATA = [
-    "base_link",
-    "front_left_foot",
-    "front_right_foot",
-    "rear_left_foot",
-    "rear_right_foot",
+    "front_left",
+    "front_right",
+    "rear_left",
+    "rear_right",
+    "bridge_ok",
+    "parapippo"
 ]
+
 
 PUBLISH_DT_S = 0.02
 CHECK_DT_S = 0.02
