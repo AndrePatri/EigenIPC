@@ -4,28 +4,21 @@ from EigenIPC.PyEigenIPC import StringTensorClient
 from typing import Union
 import re
 
-from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.defs import NamingConventions
-
-from EigenIPC.PyEigenIPC import Journal, VLevel, LogType
+from EigenIPC.PyEigenIPC import Journal, LogType
 from EigenIPC.PyEigenIPC import toNumpyDType, dtype
 
 
-class ToRos():
+class ToRos:
 
-    # Atomic bridge element to forward data from EigenIPC or PyEigenIPC
-    # over topic. Can be useful when developing distributed architectures or when
-    # one needs to implement remote debugging features
-
-    # Given a client object (either a normal client or a string client),
-    # this object creates a publisher to a number of conventional topics to
-    # stream both data and meta data associated with EigenIPC.
+    # Atomic bridge element to forward data from EigenIPC or PyEigenIPC over ROS topics.
 
     def __init__(self,
-                client: Union[Client,
-                            StringTensorClient],
-                queue_size: int = 1, # by default only read latest msg
-                ros_backend = "ros1",
-                node = None):
+                client: Union[Client, StringTensorClient],
+                queue_size: int = 1,
+                ros_backend="ros1",
+                node=None,
+                source_row_index: int = None,
+                source_n_rows: int = 1):
 
         self._check_client(client)
 
@@ -39,13 +32,20 @@ class ToRos():
 
         self._check_backend()
 
-        self._node = node # only used when ros2
+        self._node = node  # only used when ros2
+
+        self._source_row_index = source_row_index
+        self._source_n_rows = source_n_rows
 
         self._is_string_tensor = self._is_string_tensor_client(client)
 
-        self._strigtensor_length = None
+        self._stringtensor_length = None
         self._stringtensor_data = None
-        self._stringtensor_raw_buffer = None
+
+        self._read_row_index = 0
+        self._read_n_rows = None
+
+        self._check_slice_config()
 
     def _client_type_fqn(self, client) -> str:
 
@@ -60,10 +60,8 @@ class ToRos():
 
         fqn = self._client_type_fqn(client)
 
-        match = re.match("EigenIPC.PyEigenIPC.StringTensorClient*", fqn)
+        match = re.match(r"^(EigenIPC\.)?PyEigenIPC\.StringTensorClient$", fqn)
 
-        fqn = self._client_type_fqn(client)
-        
         return match is not None
 
     def _is_client(self, client) -> bool:
@@ -73,13 +71,12 @@ class ToRos():
 
         fqn = self._client_type_fqn(client)
 
-        match = re.match("EigenIPC.PyEigenIPC.PyClient*", fqn)
+        match = re.match(r"^(EigenIPC\.)?PyEigenIPC\.PyClient[A-Za-z0-9_]*$", fqn)
 
         return match is not None
 
     def _check_client(self,
-                client: Union[Client,
-                            StringTensorClient]):
+                client: Union[Client, StringTensorClient]):
 
         is_numeric_client = self._is_client(client)
         is_string_client = self._is_string_tensor_client(client)
@@ -95,12 +92,11 @@ class ToRos():
                         "_check_client",
                         exception,
                         LogType.EXCEP,
-                        throw_when_excep = True)
+                        throw_when_excep=True)
 
     def _check_backend(self):
 
-        if not (self._ros_backend == "ros1" or \
-                self._ros_backend == "ros2"):
+        if not (self._ros_backend == "ros1" or self._ros_backend == "ros2"):
 
             exception = f"Unsupported ROS backend {self._ros_backend}. Supported are \"ros1\" and \"ros2\""
 
@@ -108,7 +104,50 @@ class ToRos():
                         "_check_backend",
                         exception,
                         LogType.EXCEP,
-                        throw_when_excep = True)
+                        throw_when_excep=True)
+
+    def _check_slice_config(self):
+
+        if self._source_row_index is not None and self._source_row_index < 0:
+            Journal.log(self.__class__.__name__,
+                "_check_slice_config",
+                f"source_row_index {self._source_row_index} must be >= 0",
+                LogType.EXCEP,
+                throw_when_excep=True)
+
+        if self._source_n_rows < 1:
+            Journal.log(self.__class__.__name__,
+                "_check_slice_config",
+                f"source_n_rows {self._source_n_rows} must be >= 1",
+                LogType.EXCEP,
+                throw_when_excep=True)
+
+    def _resolve_numeric_slice(self):
+
+        n_rows_full = self._client.getNRows()
+
+        if self._source_row_index is None:
+            self._read_row_index = 0
+            self._read_n_rows = n_rows_full
+            return
+
+        if self._source_row_index >= n_rows_full:
+            Journal.log(self.__class__.__name__,
+                "_resolve_numeric_slice",
+                f"source_row_index {self._source_row_index} out of bounds for n_rows={n_rows_full}",
+                LogType.EXCEP,
+                throw_when_excep=True)
+
+        end_row = self._source_row_index + self._source_n_rows
+        if end_row > n_rows_full:
+            Journal.log(self.__class__.__name__,
+                "_resolve_numeric_slice",
+                f"Requested rows [{self._source_row_index}, {end_row}) exceed n_rows={n_rows_full}",
+                LogType.EXCEP,
+                throw_when_excep=True)
+
+        self._read_row_index = self._source_row_index
+        self._read_n_rows = self._source_n_rows
 
     def _synch_from_shared_mem(self,
                     retry: bool = True):
@@ -117,7 +156,7 @@ class ToRos():
 
             if not self._is_string_tensor:
 
-                while not self._client.read(self._publisher.np_data[:, :], 0, 0):
+                while not self._client.read(self._publisher.np_data[:, :], self._read_row_index, 0):
 
                     continue
 
@@ -131,31 +170,25 @@ class ToRos():
 
                         continue
 
-                    else:
+                    self._publisher.np_data[:, :] = self._client.get_raw_buffer()
 
-                        self._publisher.np_data[:, :] = self._client.get_raw_buffer()
-
-                        break
+                    break
 
             return True
 
-        else:
+        if not self._is_string_tensor:
 
-            if not self._is_string_tensor:
+            return self._client.read(self._publisher.np_data[:, :], self._read_row_index, 0)
 
-                return self._client.read(self._publisher.np_data[:, :], 0, 0)
+        read = self._client.read_vec(self._stringtensor_data, 0)
 
-            else:
+        if not read:
 
-                read = self._client.read_vec(self._stringtensor_data, 0)
+            return False
 
-                if not read:
+        self._publisher.np_data[:, :] = self._client.get_raw_buffer()
 
-                    return False
-
-                else:
-
-                    self._publisher.np_data[:, :] = self._client.get_raw_buffer()
+        return True
 
     def _init_publisher(self):
 
@@ -163,112 +196,114 @@ class ToRos():
 
             if self._node is not None:
 
-                warn = f"A node argument was provided to constructor!" + \
-                    f"but when using ros2 backend, that's not necessary!"
+                warn = "A node argument was provided to constructor but when using ros1 backend, that's not necessary!"
 
                 Journal.log(self.__class__.__name__,
                             "_init_publisher",
                             warn,
                             LogType.WARN,
-                            throw_when_excep = True)
+                            throw_when_excep=True)
 
             from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.ros1_utils import Ros1Publisher
 
             if not self._is_string_tensor:
 
-                self._publisher = Ros1Publisher(n_rows = self._client.getNRows(),
-                            n_cols = self._client.getNCols(),
-                            basename = self._client.getBasename(),
-                            namespace = self._client.getNamespace(),
-                            queue_size = self._queue_size,
-                            dtype = toNumpyDType(self._client.getScalarType()))
+                self._resolve_numeric_slice()
+
+                self._publisher = Ros1Publisher(n_rows=self._read_n_rows,
+                            n_cols=self._client.getNCols(),
+                            basename=self._client.getBasename(),
+                            namespace=self._client.getNamespace(),
+                            queue_size=self._queue_size,
+                            dtype=toNumpyDType(self._client.getScalarType()))
 
             else:
 
                 # we publish the encoded string tensor
+                self._stringtensor_length = self._client.length()
+                self._stringtensor_data = [""] * self._stringtensor_length
 
-                self._strigtensor_length = self._client.length()
-                self._stringtensor_data = [""] * self._strigtensor_length
+                stringtensor_raw_buffer = self._client.get_raw_buffer()
 
-                self._stringtensor_raw_buffer = self._client.get_raw_buffer()
-
-                self._publisher = Ros1Publisher(n_rows = self._stringtensor_raw_buffer.shape[0],
-                            n_cols = self._stringtensor_raw_buffer.shape[1],
-                            basename = self._client.getBasename(),
-                            namespace = self._client.getNamespace(),
-                            queue_size = self._queue_size,
-                            dtype = toNumpyDType(dtype.Int))
+                self._publisher = Ros1Publisher(n_rows=stringtensor_raw_buffer.shape[0],
+                            n_cols=stringtensor_raw_buffer.shape[1],
+                            basename=self._client.getBasename(),
+                            namespace=self._client.getNamespace(),
+                            queue_size=self._queue_size,
+                            dtype=toNumpyDType(dtype.Int))
 
         elif self._ros_backend == "ros2":
 
             if self._node is None:
 
-                exception = f"No node argument provided to constructor! " + \
-                    f"When using ros2 backend, you should provide it!"
+                exception = "No node argument provided to constructor! When using ros2 backend, you should provide it!"
 
                 Journal.log(self.__class__.__name__,
                             "_init_publisher",
                             exception,
                             LogType.EXCEP,
-                            throw_when_excep = True)
+                            throw_when_excep=True)
 
             from EigenIPC.PyEigenIPCExt.extensions.ros_bridge.ros2_utils import Ros2Publisher
 
             if not self._is_string_tensor:
 
+                self._resolve_numeric_slice()
+
                 self._publisher = Ros2Publisher(node=self._node,
-                            n_rows = self._client.getNRows(),
-                            n_cols = self._client.getNCols(),
-                            basename = self._client.getBasename(),
-                            namespace = self._client.getNamespace(),
-                            queue_size = self._queue_size,
-                            dtype = toNumpyDType(self._client.getScalarType()))
+                            n_rows=self._read_n_rows,
+                            n_cols=self._client.getNCols(),
+                            basename=self._client.getBasename(),
+                            namespace=self._client.getNamespace(),
+                            queue_size=self._queue_size,
+                            dtype=toNumpyDType(self._client.getScalarType()))
             else:
 
                 # we publish the encoded string tensor
-                self._strigtensor_length = self._client.length()
-                self._stringtensor_data = [""] * self._strigtensor_length
+                self._stringtensor_length = self._client.length()
+                self._stringtensor_data = [""] * self._stringtensor_length
 
-                string_tensor_raw_buffer = self._client.get_raw_buffer()
+                stringtensor_raw_buffer = self._client.get_raw_buffer()
 
                 self._publisher = Ros2Publisher(node=self._node,
-                            n_rows = string_tensor_raw_buffer.shape[0],
-                            n_cols = string_tensor_raw_buffer.shape[1],
-                            basename = self._client.getBasename(),
-                            namespace = self._client.getNamespace(),
-                            queue_size = self._queue_size,
-                            dtype = toNumpyDType(dtype.Int))
+                            n_rows=stringtensor_raw_buffer.shape[0],
+                            n_cols=stringtensor_raw_buffer.shape[1],
+                            basename=self._client.getBasename(),
+                            namespace=self._client.getNamespace(),
+                            queue_size=self._queue_size,
+                            dtype=toNumpyDType(dtype.Int))
 
         else:
 
-            exception = f"backend {self._ros_backend} not supported. Please use either" + \
-                    "\"ros1\" or \"ros2\"!"
+            exception = f"backend {self._ros_backend} not supported. Please use either \"ros1\" or \"ros2\"!"
 
             Journal.log(self.__class__.__name__,
                         "_init_publisher",
                         exception,
                         LogType.EXCEP,
-                        throw_when_excep = True)
+                        throw_when_excep=True)
 
-        self._publisher.run() # initialized topics and writes initializations
+        self._publisher.run()  # initializes topics and writes metadata
 
     def run(self):
 
         if not self._client.isRunning():
 
             # manually run client if not running
-
             self._client.run()
 
         self._init_publisher()
 
     def close(self):
 
-        self._client.close()
+        try:
+            self._client.close()
+        except Exception:
+            pass
 
     def update(self):
 
-        success = self._synch_from_shared_mem() # updated publisher np view with shared memory
+        success = self._synch_from_shared_mem()  # update publisher view with shared memory data
 
         if self._ros_backend == "ros2":
 

@@ -20,7 +20,9 @@ class ToZmq:
         port: int = None,
         bind: bool = True,
         queue_size: int = 1,
-        conflate: bool = True):
+        conflate: bool = True,
+        source_row_index: int = None,
+        source_n_rows: int = 1):
 
         self._check_client(client)
 
@@ -28,6 +30,9 @@ class ToZmq:
         self._bind = bind
         self._queue_size = queue_size
         self._conflate = conflate
+
+        self._source_row_index = source_row_index
+        self._source_n_rows = source_n_rows
 
         self._is_string_tensor = self._is_string_tensor_client(client)
 
@@ -49,6 +54,11 @@ class ToZmq:
 
         self._tx_data = None
         self._stringtensor_data = None
+
+        self._read_row_index = 0
+        self._read_n_rows = None
+
+        self._check_slice_config()
 
     def _client_type_fqn(self, client) -> str:
 
@@ -89,6 +99,49 @@ class ToZmq:
             LogType.EXCEP,
             throw_when_excep=True)
 
+    def _check_slice_config(self):
+
+        if self._source_row_index is not None and self._source_row_index < 0:
+            Journal.log(self.__class__.__name__,
+                "_check_slice_config",
+                f"source_row_index {self._source_row_index} must be >= 0",
+                LogType.EXCEP,
+                throw_when_excep=True)
+
+        if self._source_n_rows < 1:
+            Journal.log(self.__class__.__name__,
+                "_check_slice_config",
+                f"source_n_rows {self._source_n_rows} must be >= 1",
+                LogType.EXCEP,
+                throw_when_excep=True)
+
+    def _resolve_numeric_slice(self):
+
+        n_rows_full = self._client.getNRows()
+
+        if self._source_row_index is None:
+            self._read_row_index = 0
+            self._read_n_rows = n_rows_full
+            return
+
+        if self._source_row_index >= n_rows_full:
+            Journal.log(self.__class__.__name__,
+                "_resolve_numeric_slice",
+                f"source_row_index {self._source_row_index} out of bounds for n_rows={n_rows_full}",
+                LogType.EXCEP,
+                throw_when_excep=True)
+
+        end_row = self._source_row_index + self._source_n_rows
+        if end_row > n_rows_full:
+            Journal.log(self.__class__.__name__,
+                "_resolve_numeric_slice",
+                f"Requested rows [{self._source_row_index}, {end_row}) exceed n_rows={n_rows_full}",
+                LogType.EXCEP,
+                throw_when_excep=True)
+
+        self._read_row_index = self._source_row_index
+        self._read_n_rows = self._source_n_rows
+
     def _init_tx_buffer(self):
 
         if self._is_string_tensor:
@@ -97,18 +150,19 @@ class ToZmq:
             self._tx_data = None
             return
 
-        n_rows = self._client.getNRows()
+        self._resolve_numeric_slice()
+
         n_cols = self._client.getNCols()
         np_dtype = toNumpyDType(self._client.getScalarType())
 
-        self._tx_data = np.empty((n_rows, n_cols), dtype=np_dtype)
+        self._tx_data = np.empty((self._read_n_rows, n_cols), dtype=np_dtype)
 
     def _synch_from_shared_mem(self,
         retry: bool = True):
 
         if retry:
             if not self._is_string_tensor:
-                while not self._client.read(self._tx_data[:, :], 0, 0):
+                while not self._client.read(self._tx_data[:, :], self._read_row_index, 0):
                     continue
                 return True
 
@@ -120,7 +174,7 @@ class ToZmq:
                 return True
 
         if not self._is_string_tensor:
-            return self._client.read(self._tx_data[:, :], 0, 0)
+            return self._client.read(self._tx_data[:, :], self._read_row_index, 0)
 
         read = self._client.read_vec(self._stringtensor_data, 0)
         if not read:
@@ -137,17 +191,17 @@ class ToZmq:
         self._init_tx_buffer()
         self._publisher.run()
 
-        def close(self):
+    def close(self):
 
-            try:
-                self._publisher.close()
-            except Exception:
-                pass
+        try:
+            self._publisher.close()
+        except Exception:
+            pass
 
-            try:
-                self._client.close()
-            except Exception:
-                pass
+        try:
+            self._client.close()
+        except Exception:
+            pass
 
     def update(self,
         retry: bool = True):
