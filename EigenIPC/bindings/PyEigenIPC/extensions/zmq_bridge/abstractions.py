@@ -25,6 +25,7 @@ class ZmqPublisher:
         queue_size: int = 1,
         linger_ms: int = 0,
         conflate: bool = True,
+        drop_if_busy: bool = False,
         context: Optional[zmq.Context] = None):
 
         self._endpoint = endpoint
@@ -32,8 +33,11 @@ class ZmqPublisher:
         self._queue_size = max(1, int(queue_size))
         self._linger_ms = int(linger_ms)
         self._conflate = bool(conflate)
+        self._drop_if_busy = bool(drop_if_busy)
 
-        self._owned_context = context is None
+        # Use the process-wide singleton context by default and never terminate it here.
+        # Terminating a shared context from one bridge can break other active sockets.
+        self._owned_context = False
         self._context = context if context is not None else zmq.Context.instance()
         self._socket = None
 
@@ -99,12 +103,32 @@ class ZmqPublisher:
             payload_nbytes=tx_data.nbytes,
         )
 
-        self._socket.send(header, flags=zmq.SNDMORE)
-        self._socket.send(memoryview(tx_data), copy=False)
+        send_flags = 0
+        if self._drop_if_busy:
+            send_flags |= zmq.DONTWAIT
+
+        try:
+            self._socket.send_multipart(
+                [header, memoryview(tx_data)],
+                flags=send_flags,
+                copy=False,
+            )
+        except zmq.Again:
+            # Drop frame when socket is busy if non-blocking mode is enabled.
+            return False
+        except zmq.ZMQError as exc:
+            if exc.errno in (zmq.ETERM, zmq.ENOTSOCK):
+                # Context/socket is shutting down.
+                self._running = False
+                return False
+            raise
 
         self._seq += 1
+        return True
 
     def close(self):
+
+        self._running = False
 
         if self._socket is not None:
             try:
@@ -140,7 +164,9 @@ class ZmqSubscriber:
         self._conflate = bool(conflate)
         self._timeout_ms = int(timeout_ms)
 
-        self._owned_context = context is None
+        # Use the process-wide singleton context by default and never terminate it here.
+        # Terminating a shared context from one bridge can break other active sockets.
+        self._owned_context = False
         self._context = context if context is not None else zmq.Context.instance()
         self._socket = None
         self._poller = None
@@ -184,18 +210,42 @@ class ZmqSubscriber:
                 throw_when_excep=True)
 
         timeout = self._timeout_ms
-        events = dict(self._poller.poll(timeout=timeout))
+        try:
+            events = dict(self._poller.poll(timeout=timeout))
+        except zmq.ZMQError as exc:
+            if exc.errno in (zmq.ETERM, zmq.ENOTSOCK):
+                self._running = False
+                return None, None
+            raise
         if self._socket not in events:
             return None, None
 
-        frames = self._socket.recv_multipart(copy=False)
+        try:
+            frames = self._socket.recv_multipart(copy=False)
+        except zmq.ZMQError as exc:
+            if exc.errno in (zmq.ETERM, zmq.ENOTSOCK):
+                self._running = False
+                return None, None
+            raise
 
         if self._conflate:
             while True:
-                events = dict(self._poller.poll(timeout=0))
+                try:
+                    events = dict(self._poller.poll(timeout=0))
+                except zmq.ZMQError as exc:
+                    if exc.errno in (zmq.ETERM, zmq.ENOTSOCK):
+                        self._running = False
+                        return None, None
+                    raise
                 if self._socket not in events:
                     break
-                frames = self._socket.recv_multipart(copy=False)
+                try:
+                    frames = self._socket.recv_multipart(copy=False)
+                except zmq.ZMQError as exc:
+                    if exc.errno in (zmq.ETERM, zmq.ENOTSOCK):
+                        self._running = False
+                        return None, None
+                    raise
         
         if len(frames) != 2:
             exception = f"Malformed ZMQ message: expected 2 frames, got {len(frames)}"
@@ -267,6 +317,8 @@ class ZmqSubscriber:
         return array_2d
 
     def close(self):
+
+        self._running = False
 
         if self._socket is not None:
             try:

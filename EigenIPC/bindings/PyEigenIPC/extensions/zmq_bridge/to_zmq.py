@@ -21,6 +21,7 @@ class ToZmq:
         bind: bool = True,
         queue_size: int = 1,
         conflate: bool = True,
+        drop_if_busy: bool = False,
         source_row_index: int = None,
         source_n_rows: int = 1):
 
@@ -50,6 +51,7 @@ class ToZmq:
             bind=self._bind,
             queue_size=self._queue_size,
             conflate=self._conflate,
+            drop_if_busy=drop_if_busy,
         )
 
         self._tx_data = None
@@ -212,6 +214,6 @@ class ToZmq:
             return False
 
         flags = FLAG_STRING_TENSOR if self._is_string_tensor else FLAG_NONE
-        self._publisher.publish_numpy(self._tx_data, flags=flags)
+        published = self._publisher.publish_numpy(self._tx_data, flags=flags)
 
-        return True
+        return bool(published)
