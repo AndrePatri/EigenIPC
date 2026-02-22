@@ -889,6 +889,7 @@ namespace EigenIPC {
     template <typename Scalar, int Layout>
     void Server<Scalar, Layout>::_initSems()
     {
+        _return_code = _return_code + ReturnCode::RESET;
 
         MemUtils::semInit(_mem_config.mem_path_server_sem,
                           _srvr_sem,
@@ -897,12 +898,32 @@ namespace EigenIPC {
                           _verbose,
                           _vlevel);
 
+        if (isin(ReturnCode::SEMOPENFAIL, _return_code)) {
+
+            MemUtils::failWithCode(_return_code,
+                                   _journal,
+                                   __FUNCTION__,
+                                   _mem_config.mem_path_server_sem);
+        }
+
+        _return_code = _return_code + ReturnCode::RESET;
+
         MemUtils::semInit(_mem_config.mem_path_data_sem,
                           _data_sem,
                           _journal,
                           _return_code,
                           _verbose,
                           _vlevel);
+
+        if (isin(ReturnCode::SEMOPENFAIL, _return_code)) {
+
+            MemUtils::failWithCode(_return_code,
+                                   _journal,
+                                   __FUNCTION__,
+                                   _mem_config.mem_path_data_sem);
+        }
+
+        _return_code = _return_code + ReturnCode::RESET;
 
     }
 

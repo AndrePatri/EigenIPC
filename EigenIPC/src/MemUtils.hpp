@@ -26,6 +26,8 @@
 #include <unistd.h>
 #include <semaphore.h>
 #include <csignal>
+#include <cerrno>
+#include <cstring>
 #include <memory>
 
 #include <EigenIPC/DTypes.hpp>
@@ -484,13 +486,17 @@ namespace EigenIPC{
 
             if (sem == SEM_FAILED) {
                 // Handle semaphore creation error
+                sem = nullptr;
 
                 return_code = return_code + ReturnCode::SEMOPENFAIL;
+                return_code = return_code + ReturnCode::UNKNOWN;
 
                 if (verbose) {
 
                     std::string error = std::string("Failed to open semaphore at ") +
-                            sem_path;
+                            sem_path + std::string(". errno=") +
+                            std::to_string(errno) + std::string(" (") +
+                            std::strerror(errno) + std::string(")");
 
                     journal.log(__FUNCTION__,
                         error,
@@ -527,17 +533,56 @@ namespace EigenIPC{
                          VLevel vlevel = Journal::VLevel::V0,
                          bool unlink = false) {
 
-            sem_close(sem); // closes semaphore for the current process
+            if (sem == nullptr || sem == SEM_FAILED) {
+                if (verbose) {
+                    std::string warn = std::string("Skipping close for invalid semaphore at ") +
+                            sem_path;
+                    journal.log(__FUNCTION__,
+                         warn,
+                         LogType::WARN);
+                }
+                sem = nullptr;
+                return_code = return_code + ReturnCode::UNKNOWN;
+                return;
+            }
 
-            return_code = return_code + ReturnCode::SEMCLOSE;
+            if (sem_close(sem) == -1) { // closes semaphore for the current process
+                return_code = return_code + ReturnCode::UNKNOWN;
+                if (verbose) {
+                    std::string warn = std::string("Failed to close semaphore at ") +
+                            sem_path + std::string(". errno=") +
+                            std::to_string(errno) + std::string(" (") +
+                            std::strerror(errno) + std::string(")");
+                    journal.log(__FUNCTION__,
+                         warn,
+                         LogType::WARN);
+                }
+            } else {
+                return_code = return_code + ReturnCode::SEMCLOSE;
+            }
+
+            sem = nullptr;
 
             if (unlink) {
 
-                sem_unlink(sem_path.c_str()); // unlinks semaphore system-wide.
+                int unlink_res = sem_unlink(sem_path.c_str()); // unlinks semaphore system-wide.
                 // Other processes who had it open can still use it, but no new
                 // process can access it
 
-                return_code = return_code + ReturnCode::SEMUNLINK;
+                if (unlink_res == 0) {
+                    return_code = return_code + ReturnCode::SEMUNLINK;
+                } else {
+                    return_code = return_code + ReturnCode::UNKNOWN;
+                    if (verbose) {
+                        std::string warn = std::string("Failed to unlink semaphore at ") +
+                                sem_path + std::string(". errno=") +
+                                std::to_string(errno) + std::string(" (") +
+                                std::strerror(errno) + std::string(")");
+                        journal.log(__FUNCTION__,
+                             warn,
+                             LogType::WARN);
+                    }
+                }
 
                 if (verbose &&
                         vlevel > VLevel::V2) {
@@ -580,6 +625,19 @@ namespace EigenIPC{
                          bool verbose = true,
                          VLevel vlevel = Journal::VLevel::V0) {
 
+            if (sem == nullptr || sem == SEM_FAILED) {
+                return_code = return_code + ReturnCode::SEMRELFAIL;
+                return_code = return_code + ReturnCode::UNKNOWN;
+                if (verbose) {
+                    std::string warn = std::string("Cannot release invalid semaphore at ") +
+                            sem_path;
+                    journal.log(__FUNCTION__,
+                                 warn,
+                                 LogType::WARN);
+                }
+                return;
+            }
+
             if (verbose &&
                     vlevel > VLevel::V2) {
 
@@ -598,12 +656,17 @@ namespace EigenIPC{
 
                 if (verbose) {
 
+                    std::string warn = std::string("Failed to release semaphore at ") +
+                            sem_path + std::string(". errno=") +
+                            std::to_string(errno) + std::string(" (") +
+                            std::strerror(errno) + std::string(")");
                     journal.log(__FUNCTION__,
-                                "Failed to release semaphore at",
+                                warn,
                                 LogType::WARN);
                 }
 
                 return_code = return_code + ReturnCode::SEMRELFAIL;
+                return_code = return_code + ReturnCode::UNKNOWN;
 
                 return;
 
@@ -628,6 +691,12 @@ namespace EigenIPC{
         // semaphore acquisition
         inline int semBlockingWait(sem_t* sem,
                         ReturnCode& return_code) {
+
+            if (sem == nullptr || sem == SEM_FAILED) {
+                return_code = return_code + ReturnCode::SEMACQFAIL;
+                return_code = return_code + ReturnCode::UNKNOWN;
+                return -1;
+            }
             
             // this is blocking unless some signal is received
 
@@ -665,15 +734,33 @@ namespace EigenIPC{
         inline int semTimedWait(sem_t* sem,
                         struct timespec timeout,
                         ReturnCode& return_code) {
+
+            if (sem == nullptr || sem == SEM_FAILED) {
+                return_code = return_code + ReturnCode::SEMACQFAIL;
+                return_code = return_code + ReturnCode::UNKNOWN;
+                return -1;
+            }
             
             // blocking wait with timeout
 
-            clock_gettime(CLOCK_REALTIME, &timeout);
+            struct timespec abs_timeout;
+            if (clock_gettime(CLOCK_REALTIME, &abs_timeout) == -1) {
+                return_code = return_code + ReturnCode::SEMACQFAIL;
+                return_code = return_code + ReturnCode::UNKNOWN;
+                return -1;
+            }
+
+            abs_timeout.tv_sec += timeout.tv_sec;
+            abs_timeout.tv_nsec += timeout.tv_nsec;
+            if (abs_timeout.tv_nsec >= 1000000000L) {
+                abs_timeout.tv_sec += abs_timeout.tv_nsec / 1000000000L;
+                abs_timeout.tv_nsec = abs_timeout.tv_nsec % 1000000000L;
+            }
 
             return_code = return_code + ReturnCode::SEMACQTRY;
 
             int result = sem_timedwait(sem,
-                                &timeout);
+                                &abs_timeout);
 
             if (result == 0) {
 
@@ -708,6 +795,12 @@ namespace EigenIPC{
 
         inline int SemTryWait(sem_t*& sem,
                          ReturnCode& return_code) {
+
+            if (sem == nullptr || sem == SEM_FAILED) {
+                return_code = return_code + ReturnCode::SEMACQFAIL;
+                return_code = return_code + ReturnCode::UNKNOWN;
+                return -1;
+            }
 
             // this is nonblocking --> one-shot acquisition 
 
