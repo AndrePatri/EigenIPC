@@ -220,20 +220,32 @@ namespace EigenIPC{
                         VLevel vlevel = Journal::VLevel::V0,
                         bool unlink = false) {
 
-            // Closing the file descriptor (for this process only)
-            ::close(shm_fd);
+            if (shm_fd >= 0) {
+                // Closing the file descriptor (for this process only)
+                if (::close(shm_fd) == 0) {
+                    return_code = return_code + ReturnCode::MEMFDCLOSED;
 
-            return_code = return_code + ReturnCode::MEMFDCLOSED;
+                    if (verbose
+                            && vlevel > VLevel::V2) {
 
-            if (verbose
-                    && vlevel > VLevel::V2) {
+                        std::string info = "Closed file descriptor for " +
+                                            mem_path;
 
-                std::string info = "Closed file descriptor for " +
-                                    mem_path;
-
-                journal.log(__FUNCTION__,
-                             info,
-                             LogType::INFO);
+                        journal.log(__FUNCTION__,
+                                     info,
+                                     LogType::INFO);
+                    }
+                } else {
+                    return_code = return_code + ReturnCode::UNKNOWN;
+                    if (verbose) {
+                        std::string warn = "Failed closing file descriptor for " +
+                                            mem_path;
+                        journal.log(__FUNCTION__,
+                                     warn,
+                                     LogType::WARN);
+                    }
+                }
+                shm_fd = -1;
             }
 
             if (unlink) {
@@ -242,7 +254,11 @@ namespace EigenIPC{
                 // processed which have access to the memory can
                 // still access it, but no new process can access it
 
-                shm_unlink(mem_path.c_str());
+                if (shm_unlink(mem_path.c_str()) == 0) {
+                    return_code = return_code + ReturnCode::MEMUNLINK;
+                } else {
+                    return_code = return_code + ReturnCode::UNKNOWN;
+                }
 
                 if (verbose &&
                         vlevel > VLevel::V2) {
@@ -255,7 +271,6 @@ namespace EigenIPC{
                                  LogType::INFO);
                 }
 
-                return_code = return_code + ReturnCode::MEMUNLINK;
             }
 
         }
@@ -307,15 +322,6 @@ namespace EigenIPC{
                     journal.log(__FUNCTION__,
                                  warn,
                                  LogType::WARN);
-
-                }
-
-                if (shm_fd != -1) {
-                    // Close the file descriptor opened for checking existence
-
-                    ::close(shm_fd);
-
-                    return_code = return_code + ReturnCode::MEMFDCLOSED;
 
                 }
 

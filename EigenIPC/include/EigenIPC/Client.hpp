@@ -120,13 +120,13 @@ namespace EigenIPC{
             int _n_rows = -1;
             int _n_cols = -1;
 
-            int _data_shm_fd; // shared memory file descriptor
-            int _nrows_shm_fd,
-                _ncols_shm_fd,
-                _n_clients_shm_fd,
-                _dtype_shm_fd,
-                _isrunning_shm_fd,
-                _mem_layout_shm_fd;
+            int _data_shm_fd = -1; // shared memory file descriptor
+            int _nrows_shm_fd = -1;
+            int _ncols_shm_fd = -1;
+            int _n_clients_shm_fd = -1;
+            int _dtype_shm_fd = -1;
+            int _isrunning_shm_fd = -1;
+            int _mem_layout_shm_fd = -1;
 
             static const int _mem_layout = Layout;
 
@@ -146,7 +146,7 @@ namespace EigenIPC{
 
             SharedMemConfig _mem_config;
 
-            sem_t* _data_sem; // semaphore for safe data access
+            sem_t* _data_sem = nullptr; // semaphore for safe data access
 
             ReturnCode _return_code = ReturnCode::NONE; // overwritten by all methods
             // this is to avoid dyn. allocation
