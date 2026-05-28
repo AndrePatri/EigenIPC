@@ -27,11 +27,11 @@ namespace EigenIPC {
     namespace TimeUtils {
 
         template <typename Scalar>
-        class PerfSleep {
+        class HighResolutionSleep {
 
             public:
 
-                PerfSleep();
+                HighResolutionSleep() = default;
 
                 timespec _req, _rem;
 
