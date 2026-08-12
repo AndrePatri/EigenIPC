@@ -162,7 +162,11 @@ jobs:
 
         conda env create -f conda/build_envs/py${{ matrix.python-version }}_env.yml
         conda activate py${{ matrix.python-version }}_env
-                
+        
+        python --version
+        conda list setuptools
+        anaconda --version
+
         conda build conda/
         package_path=$(conda build conda/ --output)
         echo "Conda build package path:"
@@ -191,6 +195,10 @@ jobs:
         elif [ "${PY_VERSION_UNDERSCORE}" == "3_11" ]; then
 
           anaconda -t "${{ secrets.ANACONDACI_TOKEN_PY3_11 }}" upload --user AndrePatri --force $package_path
+
+        elif [ "${PY_VERSION_UNDERSCORE}" == "3_12" ]; then
+
+          anaconda -t "${{ secrets.ANACONDACI_TOKEN_PY3_12 }}" upload --user AndrePatri --force $package_path
 
         else
 

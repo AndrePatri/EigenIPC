@@ -3,7 +3,7 @@ name: "Jammy CI"
 on:
   push:
     branches:
-      - main
+      - devel
   # schedule:
   #   - cron: '0 2 * * 0' # trigger build at 2 a.m., each Sunday (0)
   # workflow_dispatch: # or upon user request
