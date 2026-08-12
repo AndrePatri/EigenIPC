@@ -311,8 +311,8 @@ class SharedTWrapper:
                         message,
                         LogType.EXCEP,
                         throw_when_excep = True)
-                if not self._fits_into(data, self._torch_view, 
-                                    row_index, col_index):
+                if not self._fits_into(data, self._numpy_view, 
+                                    row_index_view, col_index_view):
                     message = "Provided data does not fit in data view!!"
                     Logger.log(self.__class__.__name__,
                         "write",
