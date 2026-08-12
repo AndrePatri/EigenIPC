@@ -26,7 +26,7 @@ For more details on what EigenIPC offers, usage examples, performance benchmarks
 
 | *main* | *devel* |
 |----------|----------|
-| <img src="https://github.com/AndrePatri/EigenIPC/actions/workflows/focal_CI_build_main.yml/badge.svg" alt="Focal CI">  | <img src="https://github.com/AndrePatri/EigenIPC/actions/workflows/focal_CI_build_devel.yml/badge.svg" alt="CI Focal">  | 
+| <img src="https://github.com/AndrePatri/EigenIPC/actions/workflows/noble_CI_build_main.yml/badge.svg" alt="Noble CI">  | <img src="https://github.com/AndrePatri/EigenIPC/actions/workflows/noble_CI_build_devel.yml/badge.svg" alt="CI Noble">  | 
 | <img src="https://github.com/AndrePatri/EigenIPC/actions/workflows/jammy_CI_build_main.yml/badge.svg" alt="CI Jammy">  | <img src="https://github.com/AndrePatri/EigenIPC/actions/workflows/jammy_CI_build_devel.yml/badge.svg" alt="CI Jammy">  |
 
 

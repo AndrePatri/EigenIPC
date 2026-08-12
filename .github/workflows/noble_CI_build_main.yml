@@ -160,52 +160,46 @@ jobs:
 
         echo "Building for Python ${{ matrix.python-version }}"
 
+        echo "=== Creating Conda environment ==="
         conda env create -f conda/build_envs/py${{ matrix.python-version }}_env.yml
+        echo "=== Activating Conda environment ==="
         conda activate py${{ matrix.python-version }}_env
         
         python --version
         conda list setuptools
         anaconda --version
-
+        
+        echo "=== Building Conda package==="
         conda build conda/
         package_path=$(conda build conda/ --output)
         echo "Conda build package path:"
         echo ${package_path}
 
-        echo "Uploading to anaconda ..."
+        echo "=== Uploading to Anaconda ==="
 
-        echo "Token length: ${#ANACONDA_TOKEN}"
-
-        if [ "${PY_VERSION_UNDERSCORE}" == "3_7" ]; then
-
-          anaconda -t "${{ secrets.ANACONDACI_TOKEN_PY3_7 }}" upload --user AndrePatri --force $package_path
-          
-        elif [ "${PY_VERSION_UNDERSCORE}" == "3_8" ]; then
-
-          anaconda -t "${{ secrets.ANACONDACI_TOKEN_PY3_8 }}" upload --user AndrePatri --force $package_path
-        
-        elif [ "${PY_VERSION_UNDERSCORE}" == "3_9" ]; then
-
-          anaconda -t "${{ secrets.ANACONDACI_TOKEN_PY3_9 }}" upload --user AndrePatri --force $package_path
-
-        elif [ "${PY_VERSION_UNDERSCORE}" == "3_10" ]; then
-
-          anaconda -t "${{ secrets.ANACONDACI_TOKEN_PY3_10 }}" upload --user AndrePatri --force $package_path
-
+        if [ "${PY_VERSION_UNDERSCORE}" == "3_10" ]; then
+          ANACONDA_TOKEN="${{ secrets.ANACONDACI_TOKEN_PY3_10 }}"
         elif [ "${PY_VERSION_UNDERSCORE}" == "3_11" ]; then
-
-          anaconda -t "${{ secrets.ANACONDACI_TOKEN_PY3_11 }}" upload --user AndrePatri --force $package_path
-
+          ANACONDA_TOKEN="${{ secrets.ANACONDACI_TOKEN_PY3_11 }}"
         elif [ "${PY_VERSION_UNDERSCORE}" == "3_12" ]; then
-
-          anaconda -t "${{ secrets.ANACONDACI_TOKEN_PY3_12 }}" upload --user AndrePatri --force $package_path
-
+          ANACONDA_TOKEN="${{ secrets.ANACONDACI_TOKEN_PY3_12 }}"
         else
-
           echo "Unsupported Python version"
           exit 1
-
         fi
+
+        if [ -z "$ANACONDA_TOKEN" ]; then
+          echo "::error::Anaconda token is missing for Python ${{ matrix.python-version }}"
+          exit 1
+        fi
+
+        echo "Anaconda token is configured."
+
+        anaconda -t "$ANACONDA_TOKEN" \
+          upload \
+          --user AndrePatri \
+          --force \
+          "$package_path"
 
         anaconda logout
 
