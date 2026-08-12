@@ -12,3 +12,4 @@ dependencies:
   - eigen
   - numpy
   - anaconda-client
+  - setuptools<82

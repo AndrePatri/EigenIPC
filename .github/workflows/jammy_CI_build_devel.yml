@@ -13,6 +13,7 @@ jobs:
   cpp-build-and-test-performance:
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]  # This will use the latest stable version of Ubuntu.
         dist: [jammy]
@@ -45,6 +46,7 @@ jobs:
   cpp-build-and-test-consistency:
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]  # This will use the latest stable version of Ubuntu.
         dist: [jammy]
@@ -80,11 +82,12 @@ jobs:
     needs: cpp-build-and-test-consistency 
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]  # This will use the latest stable version of Ubuntu.
         dist: [jammy]
         compiler: [g++]
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.10', '3.11', '3.12']
 
     runs-on: ${{ matrix.os }}
 
@@ -127,5 +130,6 @@ jobs:
         username: ${{secrets.MAIL_USERNAME}}
         password: ${{secrets.MAIL_PASSWORD}}
         subject: GitHub Actions Build Failure
+        from: ${{secrets.MAIL_USERNAME}}
         to: andreapatrizi1b6e6@gmail.com
         body: The build failed. Please check the logs.

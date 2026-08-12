@@ -1,9 +1,9 @@
-name: py3.8_env
+name: py3.12_env
 channels: 
   - defaults
   - conda-forge
 dependencies: 
-  - python=3.8
+  - python=3.12
   - pip
   - conda-build
   - cmake
@@ -12,3 +12,4 @@ dependencies:
   - eigen
   - numpy
   - anaconda-client
+  - setuptools<82
