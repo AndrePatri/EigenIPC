@@ -21,6 +21,8 @@ requirements:
 
     - python
 
+about:
+
   home: https://github.com/AndrePatri/EigenIPC
 
   license: GPL-v2
