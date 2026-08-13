@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - main
+
   # schedule:
   #   - cron: '0 2 * * 0' # trigger build at 2 a.m., each Sunday (0)
+
   # workflow_dispatch: # or upon user request
 
 jobs:
@@ -15,206 +17,222 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]  # This will use the latest stable version of Ubuntu.
-        dist: [noble]
+        os: [ubuntu-24.04]
         compiler: [g++]
 
     runs-on: ${{ matrix.os }}
 
     steps:
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        ref: main
-    
-    - name: Set up environment
-      run: |
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
 
-        set -e
+      - name: Set up environment
+        run: |
+          set -e
 
-        rm -rf /opt/pyenv
-        sudo apt-get update
-        sudo apt-get install git libgtest-dev cmake libeigen3-dev pybind11-dev lsb-release python3-numpy libboost-all-dev
+          rm -rf /opt/pyenv
+          sudo apt-get update
+          sudo apt-get install -y git libgtest-dev cmake libeigen3-dev pybind11-dev lsb-release python3-numpy libboost-all-dev
 
-    - name: Build and test cpp library only
-      run: |
-        
-        set -e
+      - name: Build and test cpp library only
+        run: |
+          set -e
 
-        mkdir build
-        cd build
-        cmake ../EigenIPC/ -DWITH_TESTS=ON -DWITH_PYTHON=OFF ..
-        sudo make -j4 install
-        ctest --output-on-failure --verbose 
+          mkdir -p build
+          cd build
+          cmake ../EigenIPC/ -DWITH_TESTS=ON -DWITH_PYTHON=OFF ..
+          sudo make -j4 install
+          ctest --output-on-failure --verbose
+
 
   cpp-build-and-test-consistency:
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]  # This will use the latest stable version of Ubuntu.
-        dist: [noble]
+        os: [ubuntu-24.04]
         compiler: [g++]
 
     runs-on: ${{ matrix.os }}
 
     steps:
 
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        ref: main
-    
-    - name: Set up environment
-      run: |
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
 
-        set -e
+      - name: Set up environment
+        run: |
+          set -e
 
-        rm -rf /opt/pyenv
-        sudo apt-get update
-        sudo apt-get install git libgtest-dev cmake libeigen3-dev pybind11-dev lsb-release python3-numpy libboost-all-dev
+          rm -rf /opt/pyenv
+          sudo apt-get update
+          sudo apt-get install -y git libgtest-dev cmake libeigen3-dev pybind11-dev lsb-release python3-numpy libboost-all-dev
 
-    - name: Build and test cpp library only
-      run: |
+      - name: Build and test cpp library only
+        run: |
+          set -e
 
-        set -e
+          mkdir -p build
+          cd build
+          cmake ../EigenIPC/ -DWITH_TESTS=ON -DWITH_PYTHON=OFF ..
+          sudo make -j4 install
+          cd tests
+          ./run_consistency_check.sh
 
-        mkdir build
-        cd build
-        cmake ../EigenIPC/ -DWITH_TESTS=ON -DWITH_PYTHON=OFF ..
-        sudo make -j4 install
-        cd tests
-        ./run_consistency_check.sh
 
   pybinds-build-test-upload:
 
-    needs: cpp-build-and-test-consistency 
+    needs: cpp-build-and-test-consistency
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]  # This will use the latest stable version of Ubuntu.
-        dist: [noble]
+        os: [ubuntu-24.04]
         compiler: [g++]
         python-version: ['3.10', '3.11', '3.12']
 
     runs-on: ${{ matrix.os }}
 
     steps:
-    
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        ref: main
 
-    - name: Set up environment
-      run: |
-        
-        set -e
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
 
-        rm -rf /opt/pyenv
-        sudo apt-get update
-        sudo apt-get install git libgtest-dev cmake libeigen3-dev pybind11-dev lsb-release python3-numpy libboost-all-dev
-        echo "Current python version: "
-        python3 --version
+      - name: Set up environment
+        run: |
+          set -e
 
-    - name: Build and test python bindings
-      run: |
+          rm -rf /opt/pyenv
+          sudo apt-get update
+          sudo apt-get install -y git libgtest-dev cmake libeigen3-dev pybind11-dev lsb-release python3-numpy libboost-all-dev
 
-        set -e
+          echo "Current python version:"
+          python3 --version
 
-        mkdir build
-        cd build
-        WITH_TESTS=ON
-        WITH_PYTHON=ON
-        cmake ../EigenIPC/ -DWITH_TESTS=ON -DWITH_PYTHON=ON ..
-        sudo make -j4 install
-        export PYTHONPATH=$PYTHONPATH:/usr/local/lib/python3/dist-packages/
-        echo "Current PYTHONPATH: "
-        echo $PYTHONPATH
-        python3 tests/PyEigenIPC/perf_and_consistency_test.py
-        sudo rm -r * 
-        
-    - name: Convert Python version
+      - name: Build and test python bindings
+        run: |
+          set -e
 
-      run: echo "PY_VERSION_UNDERSCORE=$(echo ${{ matrix.python-version }} | tr '.' '_')" >> $GITHUB_ENV
+          mkdir -p build
+          cd build
 
-    - name: Build and upload to Anaconda
+          cmake ../EigenIPC/ -DWITH_TESTS=ON -DWITH_PYTHON=ON ..
+          sudo make -j4 install
 
-      shell: bash -l {0}
-      run: |
+          export PYTHONPATH="$PYTHONPATH:/usr/local/lib/python3/dist-packages/"
 
-        set -e
+          echo "Current PYTHONPATH:"
+          echo "$PYTHONPATH"
 
-        # Install Miniconda
-        wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
-        bash miniconda.sh -b -p $HOME/miniconda
-        source "$HOME/miniconda/etc/profile.d/conda.sh"
-        hash -r
-        conda config --set always_yes yes --set changeps1 no
-        conda update -q conda
+          python3 tests/PyEigenIPC/perf_and_consistency_test.py
 
-        # Useful for debugging any issues with conda
-        conda info -a
+          sudo rm -rf ./*
 
-        echo "Building for Python ${{ matrix.python-version }}"
+      - name: Convert Python version
+        run: |
+          echo "PY_VERSION_UNDERSCORE=$(echo '${{ matrix.python-version }}' | tr '.' '_')" >> "$GITHUB_ENV"
 
-        echo "=== Creating Conda environment ==="
-        conda env create -f conda/build_envs/py${{ matrix.python-version }}_env.yml
-        echo "=== Activating Conda environment ==="
-        conda activate py${{ matrix.python-version }}_env
-        
-        python --version
-        conda list setuptools
-        anaconda --version
-        
-        echo "=== Building Conda package==="
-        conda build conda/
-        package_path=$(conda build conda/ --output)
-        echo "Conda build package path:"
-        echo ${package_path}
+      - name: Install Miniconda and build Conda package
+        shell: bash -l {0}
+        run: |
+          set -euxo pipefail
 
-        echo "=== Uploading to Anaconda ==="
+          # Install Miniconda
+          wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+          bash miniconda.sh -b -p "$HOME/miniconda"
 
-        if [ "${PY_VERSION_UNDERSCORE}" == "3_10" ]; then
-          ANACONDA_TOKEN="${{ secrets.ANACONDACI_TOKEN_PY3_10 }}"
-        elif [ "${PY_VERSION_UNDERSCORE}" == "3_11" ]; then
-          ANACONDA_TOKEN="${{ secrets.ANACONDACI_TOKEN_PY3_11 }}"
-        elif [ "${PY_VERSION_UNDERSCORE}" == "3_12" ]; then
-          ANACONDA_TOKEN="${{ secrets.ANACONDACI_TOKEN_PY3_12 }}"
-        else
-          echo "Unsupported Python version"
-          exit 1
-        fi
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          hash -r
 
-        if [ -z "$ANACONDA_TOKEN" ]; then
-          echo "::error::Anaconda token is missing for Python ${{ matrix.python-version }}"
-          exit 1
-        fi
+          conda config --set always_yes yes --set changeps1 no
+          conda update -q conda
 
-        echo "Anaconda token is configured."
+          echo "=== Conda info ==="
+          conda info -a
 
-        anaconda -t "$ANACONDA_TOKEN" \
-          upload \
-          --user AndrePatri \
-          --force \
-          "$package_path"
+          echo "=== Creating Conda environment for Python ${{ matrix.python-version }} ==="
+          conda env create -f "conda/build_envs/py${{ matrix.python-version }}_env.yml"
 
-        anaconda logout
+          echo "=== Activating Conda environment ==="
+          conda activate "py${{ matrix.python-version }}_env"
 
-        conda deactivate
-          
-    - name: Notify on failure
-      if: failure()
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        username: ${{secrets.MAIL_USERNAME}}
-        password: ${{secrets.MAIL_PASSWORD}}
-        subject: GitHub Actions Build Failure
-        from: ${{secrets.MAIL_USERNAME}}
-        to: andreapatrizi1b6e6@gmail.com
-        body: The build failed. Please check the logs.
+          python --version
+          conda list setuptools
 
+          echo "=== Resolving Conda package path ==="
+          package_path="$(conda build conda/ --output | tail -n 1)"
+
+          if [ -z "$package_path" ]; then
+            echo "::error::conda build --output returned an empty package path"
+            exit 1
+          fi
+
+          echo "Conda package will be:"
+          echo "$package_path"
+
+          echo "=== Building Conda package ==="
+          conda build conda/
+
+          echo "=== Verifying built package exists ==="
+          ls -lh "$package_path"
+
+          echo "PACKAGE_PATH=$package_path" >> "$GITHUB_ENV"
+
+      - name: Upload to Anaconda
+        shell: bash -l {0}
+        run: |
+          set -euxo pipefail
+
+          source "$HOME/miniconda/etc/profile.d/conda.sh"
+          conda activate "py${{ matrix.python-version }}_env"
+
+          if [ "${PY_VERSION_UNDERSCORE}" == "3_10" ]; then
+            ANACONDA_TOKEN="${{ secrets.ANACONDACI_TOKEN_PY3_10 }}"
+          elif [ "${PY_VERSION_UNDERSCORE}" == "3_11" ]; then
+            ANACONDA_TOKEN="${{ secrets.ANACONDACI_TOKEN_PY3_11 }}"
+          elif [ "${PY_VERSION_UNDERSCORE}" == "3_12" ]; then
+            ANACONDA_TOKEN="${{ secrets.ANACONDACI_TOKEN_PY3_12 }}"
+          else
+            echo "::error::Unsupported Python version: ${{ matrix.python-version }}"
+            exit 1
+          fi
+
+          if [ -z "$ANACONDA_TOKEN" ]; then
+            echo "::error::Anaconda token is missing for Python ${{ matrix.python-version }}"
+            exit 1
+          fi
+
+          echo "Anaconda token is configured."
+          echo "Uploading package:"
+          ls -lh "$PACKAGE_PATH"
+
+          anaconda -t "$ANACONDA_TOKEN" \
+            upload \
+            --user AndrePatri \
+            --force \
+            "$PACKAGE_PATH"
+
+          echo "=== Upload completed successfully ==="
+
+      # Temporarily disabled while debugging Conda publishing.
+      # Re-enable after MAIL_PASSWORD is configured as a Gmail app password.
+      #
+      # - name: Notify on failure
+      #   if: failure()
+      #   uses: dawidd6/action-send-mail@v3
+      #   with:
+      #     server_address: smtp.gmail.com
+      #     server_port: 465
+      #     username: ${{ secrets.MAIL_USERNAME }}
+      #     password: ${{ secrets.MAIL_PASSWORD }}
+      #     subject: GitHub Actions Build Failure
+      #     from: ${{ secrets.MAIL_USERNAME }}
+      #     to: andreapatrizi1b6e6@gmail.com
+      #     body: The build failed. Please check the logs.
