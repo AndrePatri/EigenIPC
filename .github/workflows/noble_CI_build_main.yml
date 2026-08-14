@@ -154,6 +154,9 @@ jobs:
 
           conda config --set always_yes yes --set changeps1 no
 
+          # Avoid ToS prompts in CI.
+          export CONDA_PLUGINS_AUTO_ACCEPT_TOS=yes
+
           echo "=== Conda version ==="
           conda --version
 
@@ -171,21 +174,28 @@ jobs:
           python --version
           conda list setuptools
 
-          echo "=== Resolving Conda package path ==="
-          package_path="$(conda build conda/ --output | tail -n 1)"
+          echo "=== Building Conda package ==="
+
+          export CONDA_BLD_PATH="$RUNNER_TEMP/conda-bld"
+          mkdir -p "$CONDA_BLD_PATH"
+
+          conda build conda/ --no-anaconda-upload
+
+          echo "=== Contents of Conda build directory ==="
+          find "$CONDA_BLD_PATH" -maxdepth 2 -type f -print
+
+          package_path="$(
+            find "$CONDA_BLD_PATH" -maxdepth 2 -type f \
+              \( -name 'eigenipc-*.conda' -o -name 'eigenipc-*.tar.bz2' \) \
+              | head -n 1
+          )"
 
           if [ -z "$package_path" ]; then
-            echo "::error::conda build --output returned an empty package path"
+            echo "::error::EigenIPC Conda package was not found after build"
             exit 1
           fi
 
-          echo "Conda package will be:"
-          echo "$package_path"
-
-          echo "=== Building Conda package ==="
-          conda build conda/
-
-          echo "=== Verifying built package exists ==="
+          echo "Built package:"
           ls -lh "$package_path"
 
           echo "PACKAGE_PATH=$package_path" >> "$GITHUB_ENV"
