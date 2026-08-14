@@ -10,6 +10,7 @@ on:
 
   # workflow_dispatch: # or upon user request
 
+
 jobs:
 
   cpp-build-and-test-performance:
@@ -152,13 +153,17 @@ jobs:
           hash -r
 
           conda config --set always_yes yes --set changeps1 no
-          conda update -q conda
+
+          echo "=== Conda version ==="
+          conda --version
 
           echo "=== Conda info ==="
           conda info -a
 
           echo "=== Creating Conda environment for Python ${{ matrix.python-version }} ==="
-          conda env create -f "conda/build_envs/py${{ matrix.python-version }}_env.yml"
+          conda env create \
+            --format environment-yaml \
+            -f "conda/build_envs/py${{ matrix.python-version }}_env.yml"
 
           echo "=== Activating Conda environment ==="
           conda activate "py${{ matrix.python-version }}_env"
